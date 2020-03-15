@@ -15,6 +15,10 @@ StubTechAdjCoef_Cool, world/+{name}region, region/+{name;nocreate=1}pass-through
 
 Bldg_ShellEff, world/+{name}region, region/+{name}gcam-consumer, gcam-consumer/+{name}nodeInput, nodeInput/+{name}building-node-input, building-node-input/+{year}shell-conductance,building-node-input/+shell-conductance,scenario,scenario/world,world/region
 
+IncomeElasticity_trn, world/+{name}region, region/+{name}energy-final-demand, energy-final-demand/+perCapitaBased, energy-final-demand/final-energy-consumer, energy-final-demand/+{year}income-elasticity, energy-final-demand/+income-elasticity, scenario, scenario/world
+
+TranSubsecInterp, world/+{name}region, region/+{name}supplysector, supplysector/+{name}tranSubsector, tranSubsector/+{apply-to}interpolation-rule, tranSubsector/+{delete}interpolation-rule, tranSubsector/+{from-year}interpolation-rule, tranSubsector/+{to-year}interpolation-rule, interpolation-rule/+to-value, interpolation-rule/+{name}interpolation-function, scenario/world, scenario
+
 GDP/+{year}laborproductivity, GDP/+laborproductivity
 
 #####, SCENARIO
