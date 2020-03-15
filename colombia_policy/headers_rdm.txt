@@ -1,7 +1,7 @@
 
 ##, Note: comment lines need to have a comma somewhere in them (there is no comment character)
 
-#####, RPS
+#####, Colombia Policies
 
 SecondaryOutput_NoCool, world/+{name}region, region/+{name;nocreate=1}supplysector, supplysector/+{name;nocreate=1}subsector, subsector/+{name;nocreate=1}stub-technology, stub-technology/+{year}period, period/+{name}res-secondary-output, res-secondary-output/+output-ratio, scenario, scenario/world
 
@@ -12,6 +12,8 @@ RESPolicy, world/+{name}region, region/+{name}policy-portfolio-standard, policy-
 StubTechAdjCoef_NoCool, world/+{name}region, region/+{name;nocreate=1}supplysector, supplysector/+{name;nocreate=1}subsector, subsector/+{name;nocreate=1}stub-technology, stub-technology/+{year}period, period/+{name}minicam-energy-input, minicam-energy-input/+market-name, minicam-energy-input/+{year}adjusted-coefficient,minicam-energy-input/+adjusted-coefficient,period/+{name}CO2,scenario,scenario/world,world/region
 
 StubTechAdjCoef_Cool, world/+{name}region, region/+{name;nocreate=1}pass-through-sector, pass-through-sector/+{name;nocreate=1}subsector, subsector/+{name;nocreate=1}stub-technology, stub-technology/+{year}period, period/+{name}minicam-energy-input, minicam-energy-input/+market-name, minicam-energy-input/+{year}adjusted-coefficient,minicam-energy-input/+adjusted-coefficient,period/+{name}CO2,scenario,scenario/world,world/region
+
+Bldg_ShellEff, world/+{name}region, region/+{name}gcam-consumer, gcam-consumer/+{name}nodeInput, nodeInput/+{name}building-node-input, building-node-input/+{year}shell-conductance,building-node-input/+shell-conductance,scenario,scenario/world,world/region
 
 GDP/+{year}laborproductivity, GDP/+laborproductivity
 
