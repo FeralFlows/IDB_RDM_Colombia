@@ -13,7 +13,7 @@ library(gcamdata)
 # the GCAM model interface to create a XML file. Need to figure out if these xml files can actually be kept separate,
 # in which case we can automate the XML creation process
 
-base_directory <- c('C:/Users/twild/all_git_repositories/IDB_RDM/Uncertainty XML/')
+base_directory <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/colombia_policy/IndustryEfficiency/')
 
 # Read in base data (taken from Gcam data system after building). We will modify the efficiencies in the base data to
 # create a new set of assumptions and associated file.
@@ -43,7 +43,7 @@ output <- data %>%
 output <- output[desired_output_column_order]  # Reorder coluns to order required by header
 
 # Write top column labels required as proper formatting to create XML
-output_file <- c('C:/Users/twild/all_git_repositories/IDB_RDM/Uncertainty XML/IndustrialStubTechEff.csv')
+output_file <- paste0(base_directory, 'IndustrialStubTechEff.csv')
 if(file.exists(output_file)){
   file.remove(output_file)
 }
