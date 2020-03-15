@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario>
+    <world>
+        <region name="Colombia">
+            <energy-final-demand name="trn_pass">
+                <perCapitaBased>1</perCapitaBased>
+                <final-energy-consumer/>
+                <income-elasticity year="2015">1</income-elasticity>
+                <income-elasticity year="2020">0.8</income-elasticity>
+                <income-elasticity year="2025">0.6</income-elasticity>
+                <income-elasticity year="2030">0.5</income-elasticity>
+                <income-elasticity year="2035">0.5</income-elasticity>
+                <income-elasticity year="2040">0.5</income-elasticity>
+                <income-elasticity year="2045">0.5</income-elasticity>
+                <income-elasticity year="2050">0.5</income-elasticity>
+                <income-elasticity year="2055">0.5</income-elasticity>
+                <income-elasticity year="2060">0.5</income-elasticity>
+                <income-elasticity year="2065">0.5</income-elasticity>
+                <income-elasticity year="2070">0.5</income-elasticity>
+                <income-elasticity year="2075">0.5</income-elasticity>
+                <income-elasticity year="2080">0.5</income-elasticity>
+                <income-elasticity year="2085">0.5</income-elasticity>
+                <income-elasticity year="2090">0.5</income-elasticity>
+                <income-elasticity year="2095">0.5</income-elasticity>
+                <income-elasticity year="2100">0.5</income-elasticity>
+            </energy-final-demand>
+        </region>
+    </world>
+</scenario>

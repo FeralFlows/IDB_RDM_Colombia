@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario>
+    <world>
+        <region name="Colombia">
+            <supplysector name="trn_pass_road">
+                <tranSubsector name="Bus">
+                    <interpolation-rule apply-to="share-weight"
+                        delete="1" from-year="2010" to-year="2030">
+                        <to-value>2</to-value>
+                        <interpolation-function name="linear"/>
+                    </interpolation-rule>
+                    <interpolation-rule apply-to="share-weight"
+                        delete="1" from-year="2030" to-year="2050">
+                        <to-value>3</to-value>
+                        <interpolation-function name="linear"/>
+                    </interpolation-rule>
+                    <interpolation-rule apply-to="share-weight"
+                        delete="1" from-year="2050" to-year="2100">
+                        <to-value>3</to-value>
+                        <interpolation-function name="linear"/>
+                    </interpolation-rule>
+                </tranSubsector>
+                <tranSubsector name="LDV">
+                    <interpolation-rule apply-to="share-weight"
+                        delete="1" from-year="2010" to-year="2100">
+                        <to-value>1.001</to-value>
+                        <interpolation-function name="linear"/>
+                    </interpolation-rule>
+                </tranSubsector>
+            </supplysector>
+        </region>
+    </world>
+</scenario>
