@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario>
+    <world>
+        <region name="Colombia">
+            <supplysector name="resid heating">
+                <subsector name="traditional biomass">
+                    <interpolation-rule apply-to="share-weight"
+                        delete="1" from-year="2010" to-year="2030">
+                        <to-value>0.5</to-value>
+                        <interpolation-function name="linear"/>
+                    </interpolation-rule>
+                    <interpolation-rule apply-to="share-weight"
+                        delete="1" from-year="2030" to-year="2050">
+                        <to-value>0.3</to-value>
+                        <interpolation-function name="linear"/>
+                    </interpolation-rule>
+                </subsector>
+            </supplysector>
+            <supplysector name="resid others">
+                <subsector name="traditional biomass">
+                    <interpolation-rule apply-to="share-weight"
+                        delete="1" from-year="2010" to-year="2030">
+                        <to-value>0.5</to-value>
+                        <interpolation-function name="linear"/>
+                    </interpolation-rule>
+                    <interpolation-rule apply-to="share-weight"
+                        delete="1" from-year="2030" to-year="2050">
+                        <to-value>0.3</to-value>
+                        <interpolation-function name="linear"/>
+                    </interpolation-rule>
+                </subsector>
+            </supplysector>
+        </region>
+    </world>
+</scenario>
