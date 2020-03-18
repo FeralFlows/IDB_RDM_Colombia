@@ -1,0 +1,29 @@
+<!-- 
+This xml file was initially created in notepad, by giving the file a .xml extension.
+This file must be referenced in the configuration file of interest, with batch run turned on.
+-->
+<BatchRunner>
+	<ComponentSet name="RefPolDDP">
+		<!--This will run just the configuration script, i.e. a reference case, without any added policies, unless policies are added there already.-->
+		<FileSet name="Reference">
+		</FileSet>
+
+		<FileSet name="ColPol">
+       <Value name = "rps policy file">../../input/idb/rdm/Colombia_RPS.xml</Value>
+       <Value name = "TradBiomass_SW">../../input/idb/rdm/TradBiomass_SW.xml</Value>
+       <Value name = "LDV_BEV_Interp">../../input/idb/rdm/LDV_BEV_Interp.xml</Value>
+       <Value name = "TranSubsecInterp">../../input/idb/rdm/TranSubsecInterp.xml</Value>
+       <Value name = "IncomeElasticity_trn">../../input/idb/rdm/IncomeElasticity_trn.xml</Value>
+       <Value name = "Bldg_ShellEff">../../input/idb/rdm/Bldg_ShellEff.xml</Value>
+       <Value name = "IndustrialStubTechEff">../../input/idb/rdm/IndustrialStubTechEff.xml</Value>
+		</FileSet>
+
+		<FileSet name="DDP">
+	<!--POLICY FILES-->
+	<!--2. Apply CO2 prices to CO2 to achieve constraint described above, but also then apply the price to Non Co2-->
+       <Value name = "policy">../../input/idb/policy/CarbonTax_CO2_NonCO2_CO_ARG.xml</Value>
+       <Value name = "policy link file">../../input/idb/policy/CarbonTax_CO2_NonCO2_LINK_CO_ARG.xml</Value>
+		</FileSet>
+
+	</ComponentSet>
+</BatchRunner>
