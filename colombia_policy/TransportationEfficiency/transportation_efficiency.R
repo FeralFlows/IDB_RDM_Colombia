@@ -21,9 +21,9 @@ L254.IncomeElasticity_trn <- read.csv(paste0(base_directory,'L254.IncomeElastici
 L254.IncomeElasticity_trn.Colombia <- L254.IncomeElasticity_trn %>% 
   filter(region=='Colombia') %>%
   filter(energy.final.demand=='trn_pass')
-L254.IncomeElasticity_trn.Colombia$income.elasticity[L254.IncomeElasticity_trn.Colombia$year==2020] <- 0.8
-L254.IncomeElasticity_trn.Colombia$income.elasticity[L254.IncomeElasticity_trn.Colombia$year==2025] <- 0.6
-L254.IncomeElasticity_trn.Colombia$income.elasticity[L254.IncomeElasticity_trn.Colombia$year>=2030] <- 0.5
+L254.IncomeElasticity_trn.Colombia$income.elasticity[L254.IncomeElasticity_trn.Colombia$year==2020] <- 1.3
+L254.IncomeElasticity_trn.Colombia$income.elasticity[L254.IncomeElasticity_trn.Colombia$year==2025] <- 1.6
+L254.IncomeElasticity_trn.Colombia$income.elasticity[L254.IncomeElasticity_trn.Colombia$year>=2030] <- 2
 L254.IncomeElasticity_trn.Colombia <- L254.IncomeElasticity_trn.Colombia %>% 
   mutate(perCapitaBased=1) %>% 
   mutate('final-energy-consumer'=1)

@@ -1,24 +1,17 @@
 library('rgcam')
+library(tibble)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
 
 # Load single file produced from RDM experiment.
 base_dir <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output/')
-output_file <- c('allResults.proj')
-prj <- loadProject(paste0(base_dir, output_file))
-prj_copy <- prj
-# Select three scenarios for which you want to produce individual/comparison plots.
-
-Reference <- prj[['Reference_110']]
-ColPol <- prj[['ColPol_110']]
-DDP <- prj[['DDP_110']]
-saveRDS(Reference, file = "Reference_110.rds")
-saveRDS(ColPol, file = "ColPol_110.rds")
-saveRDS(DDP, file = "DDP_110.rds")
-scenarios <- c('Reference', 'ColPol', 'DDP')
+output_file <- c('03202020.dat')
+prj_path <- paste0(base_dir, output_file)
+prj <- loadProject(prj_path)
 
 # Create empty data frame
 queries <- listQueries(prj)
-output <- data.frame()
-output <- setNames(data.frame(matrix(ncol = length(queries), nrow = 0)), queries)
 
 # Loop through all data outputs, rename scenario as regular scenario name, and create new "experiment" column with
 # corresponding experiment number
@@ -26,38 +19,89 @@ for(experiment in names(prj)){
   for(query in queries){
     exp <- prj[[experiment]]
     qry <- exp[[query]]
-    qry <- qry %>% 
-      mutate(experiment=substring(scenario, regexpr("_", scenario) + 1, nchar(scenario))) %>% 
+    qry <- qry %>%
+      mutate(experiment=substring(scenario, regexpr("_", scenario) + 1, nchar(scenario))) %>%
       mutate(old_scen_name=scenario) %>%
       mutate(scenario=substring(scenario, 0, regexpr("_", scenario)-1))
     prj[[experiment]][[query]] <- qry  # replace query result for this query and experiment with modified dataframe
   }
 }
+prj_copy <- prj  # Stores the original prj, before we cut extra stuff out of it.
+
+num_runs <- 180
+short_list <- c()
+scens <- c("Reference", "ColPol", "DDP")
+for(scen in scens){
+  for(run in seq(1:num_runs)){
+    short_list <- append(short_list, paste0(scen, "_", run-1))
+  }
+}
+prj <- prj[short_list]  # Eliminate any extra/unnecessary runs stored in the .dat file from PIC.
+# Save the new file so it can then be imported in the way Metis expects
+saveRDS(prj, file='C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output/03202020_Trim.dat')
+#Import file to Metis
+scenOrigNames_i = c("Reference", "ColPol", "DDP")
+scenNewNames_i = c("Reference", "Current_Policy", "DDP")
+paramsSelect_i <- c('All')
+paramsSelect_i <- c('emissCO2BySectorNoBio')
+# Connect to gcam database or project
+dataProjPath_i <- paste("C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output") # Path to dataProj file.
+dataProj_i <-"03202020_Trim.dat"  # Use if gcamdata has been saved as .proj file
+queriesSelect_i <- c("emissCO2BySectorNoBio")  # c("All")
+queriesSelect_i <- c("CO2 emissions by sector (no bio)") # c("All")
+
+regionsSelect_i <- c("Colombia")
+dataGCAM<-metis.readgcam(reReadData = F,  # F
+                         scenOrigNames = scenOrigNames_i,
+                         scenNewNames = scenNewNames_i,
+                         dataProj = dataProj_i,
+                         dataProjPath = dataProjPath_i,
+                         regionsSelect = regionsSelect_i,
+                         paramsSelect=paramsSelect_i,
+                         queriesSelect=queriesSelect_i)
+
+
+
+#Eliminate unneeded queries
+queries_relevant <- c('CO2 emissions by sector (no bio)')
 
 # Create a single dataframe that stores all all experiments under a single query.
-names(reorg_prj) <- queries
-reorg_prj <- vector("list", length(queries))
-names(reorg_prj) <- queries
+reorg_prj <- vector("list", length(queries_relevant))
+names(reorg_prj) <- queries_relevant
 
 for(item in names(reorg_prj)){
   reorg_prj[[item]] <- data.frame()
 }
-for(query in queries){
-  for(experiment in names(prj)){
-    reorg_prj[[query]] <- rbind(reorg_prj[[query]], prj[[experiment]][[query]])
+for(query in queries_relevant){
+  for(experiment in names(prj[short_list])){
+    print(experiment)
+    #print(reorg_prj)
+    reorg_prj[[query]] <- rbind(reorg_prj[[query]], prj[[experiment]][[query]] %>% filter(region=="Colombia"))
   }
 }
 
+
+
+# Save this R data object to avoid having to go through this import and transformation process again.
+saveRDS(reorg_prj, file='C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output/Reorg_allResults.proj')
 # Plot CO2 emissions across the 540 scenarios.
-
+fig_path <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/post_processing/figures/CO2.png')
+y_lbl <- 'CO2 Emissions (Mt)'
+x_lbl <- 'Time'
+title <- 'Emissions Uncertainty'
+plot_df <- reorg_prj$`CO2 emissions by sector (no bio)` %>% 
+  group_by(scenario, region, experiment, old_scen_name, Units, year) %>% 
+  summarize(value=(44/12)*sum(value)) %>% 
+  filter(scenario %in% c("DDP", "ColPol"))
+x_min <- 2010
+x_max <- 2050
+plot_scens <- c("ColPol", "DDP")
+line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max)
 # Function to make plots
-line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_names, rolling=0, y_lbl=NULL,
-                                x_lbl=NULL, y_max=NULL, y_min=NULL, trendline=1, all_same_color=1, title=NULL, legend_on=TRUE,
-                                plot_var=NULL, plot_hist=TRUE, x_min=NULL, x_max=NULL, plot_reference=NULL,
-                                gcm_list=NULL, rcp_list=NULL){
-
-  line_colors<-get(plot_df$FillPalette)
-
+line_plot <- function(plot_df, fig_path, plot_scens, y_lbl=NULL,
+                      x_lbl=NULL, y_max=NULL, y_min=NULL, 
+                      all_same_color=1, title=NULL, legend_on=TRUE,
+                      plot_var=NULL, x_min=NULL, x_max=NULL){
   # ggplot2 Theme
   z_theme <<- theme_bw() +
     theme(
@@ -74,74 +118,21 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
       ,strip.background =   element_rect(fill = NA, colour = "black")
       ,plot.margin =        unit(c(1, 1, 1, 1), "lines")
       ,plot.title=          element_text(face="bold", hjust=0.2, vjust = -4, margin = margin(b=20), size=8)
-      #,plot.margin=grid::unit(c(0,0,0,0), "mm")
+      ,legend.position =    c(0.95, 0.95)
     )
 
-  p <- ggplot(data=plot_df_hist, mapping = aes(x = year, y = rolling_mean, colour=gcm, fill=gcm))
-
-
-  if(all_same_color==1){
-    color_var = 'grey70' # "#153E7E"
-  }else{
-    color_var = NULL
+#  p <- ggplot(data=plot_df, mapping = aes(x = year, y = value, colour=scenario, fill=scenario))
+  p <- ggplot()
+  ctr <- 0
+  color_list <- c('black', 'dodgerblue3')  #  #de2d26, #fc9272
+  for(plot_scen in plot_scens){
+    ctr <- ctr+1
+    plot_df_filt <- plot_df %>% filter(scenario==plot_scen)
+    p <- p + geom_line(size=0.5, color=color_list[ctr], 
+                       data=plot_df_filt, mapping = aes(x = year, y = value, group=experiment))  # colour=scenario 
+    
   }
-
-  for(gcm1 in gcm_names){
-    for(rcp1 in rcp_names){
-      filtered_df <- plot_df_orig %>% filter(rcp==rcp1, gcm==gcm1)
-      if(rolling==1){
-        if(all_same_color==1){
-          p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = rolling_mean))
-        }else{
-          p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = rolling_mean,
-                                                                       colour=gcm))
-        }
-      }else if(rolling==2){
-        if(all_same_color==1){
-          p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = smoothedY))
-        }else{
-          p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = smoothedY,
-                                                                       colour=gcm))
-        }
-
-      }else{
-        if(all_same_color==1){
-          p <- p + geom_line(size=0.5, color = color_var, data=filtered_df, mapping = aes(x = year, y = value))
-        }else{
-          p <- p + geom_line(size=0.5, data=filtered_df, mapping = aes(x = year, y = value, colour=gcm))
-        }
-      }
-
-    }
-  }
-
-  # Plot reference scenario
-  if(!is.null(plot_reference)){
-    p <- p + geom_line(size=0.5, linetype=1, color = 'black', data=filtered_df, mapping = aes(x = year, y = reference))
-  }
-
-  # SO far, only adding this colored gcm/rcp plots for smoothedY
-  # Plot select subset of gcms. Maximum of two lines, or will generate error
-  if(rolling==2){
-    ctr <- 0
-    color_list <- c('dodgerblue3', '#fc9272')  #  #de2d26
-    if(!is.null(gcm_list)){
-      for(model in gcm_list){
-        for(forc in rcp_list){
-          ctr <- ctr + 1
-          if(ctr>2){
-            Print("error: currently can only plot 2 lines of individual gcms/rcps as one color")
-          }
-          plot_df_orig_2 <- plot_df_orig %>% filter(gcm == model, rcp==forc)  # , rcp == c('rcp2p6')
-          plot_df_orig_2$gcm <- as.character(plot_df_orig_2$gcm)
-          plot_df_orig_2$rcp <- as.character(plot_df_orig_2$rcp)
-          p <- p + geom_line(size=0.5, linetype=1, color = color_list[ctr],
-                             data=plot_df_orig_2, mapping = aes(x = year, y = smoothedY))  # linetype=2
-        }
-      }
-    }
-  }
-
+  
   p <- p + xlab(x_lbl) + ylab(y_lbl)
   if(!is.null(y_min)){
     p<-p + scale_y_continuous(limits=c(y_min - 0.1*abs(y_min), 1.1*y_max))
@@ -149,15 +140,22 @@ line_plot_hist_proj <- function(plot_df, plot_df_hist, fig_name, gcm_names, rcp_
   if(!is.null(x_min)){
     p<-p + scale_x_continuous(limits=c(x_min, x_max))
   }
-  p<-p + scale_color_manual(values=line_colors, name = "Time Scale")
-  if(!is.null(plot_df_hist)){
-    p<-p + scale_color_manual(values=line_colors_hist)
-  }
-  if(legend_on==FALSE){
+  if(legend_on==TRUE){
     p <- p + guides(color=legend_on)
   }
   p <- p + ggtitle(title)
   p <- p + z_theme
   p
-  ggsave(fig_name, dpi=900, width=2.5, height=2.5, units="in")
+  ggsave(fig_path, dpi=900, width=2.5, height=2.5, units="in")
 }
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Select three scenarios for which you want to produce individual/comparison plots.
+Reference <- prj[['Reference_110']]
+ColPol <- prj[['ColPol_110']]
+DDP <- prj[['DDP_110']]
+saveRDS(Reference, file = "Reference_110.rds")
+saveRDS(ColPol, file = "ColPol_110.rds")
+saveRDS(DDP, file = "DDP_110.rds")
+scenarios <- c('Reference', 'ColPol', 'DDP')
+#-----------------------------------------------------------------------------------------------------------------------
