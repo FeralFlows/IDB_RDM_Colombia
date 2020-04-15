@@ -3,10 +3,11 @@ library(tibble)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library('metis')
 
 # Load single file produced from RDM experiment.
 base_dir <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output/')
-output_file <- c('03202020.dat')
+output_file <- c('04022020.dat')
 prj_path <- paste0(base_dir, output_file)
 prj <- loadProject(prj_path)
 
@@ -33,23 +34,27 @@ short_list <- c()
 scens <- c("Reference", "ColPol", "DDP")
 for(scen in scens){
   for(run in seq(1:num_runs)){
-    short_list <- append(short_list, paste0(scen, "_", run-1))
+    if(paste0(scen, "_", run-1) %in% names(prj)){
+      short_list <- append(short_list, paste0(scen, "_", run-1))
+    }
   }
 }
 prj <- prj[short_list]  # Eliminate any extra/unnecessary runs stored in the .dat file from PIC.
 # Save the new file so it can then be imported in the way Metis expects
-saveRDS(prj, file='C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output/03202020_Trim.dat')
+saveRDS(prj, file='C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output/04022020_Trim.dat')
 #Import file to Metis
 scenOrigNames_i = c("Reference", "ColPol", "DDP")
 scenNewNames_i = c("Reference", "Current_Policy", "DDP")
-paramsSelect_i <- c('All')
+#paramsSelect_i <- c('All')
 paramsSelect_i <- c('emissCO2BySectorNoBio')
 # Connect to gcam database or project
 dataProjPath_i <- paste("C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output") # Path to dataProj file.
-dataProj_i <-"03202020_Trim.dat"  # Use if gcamdata has been saved as .proj file
-queriesSelect_i <- c("emissCO2BySectorNoBio")  # c("All")
-queriesSelect_i <- c("CO2 emissions by sector (no bio)") # c("All")
+dataProj_i <-"04022020.dat"  # Use if gcamdata has been saved as .proj file
 
+# LOOK INTO ERROR WITH TRIM FILE...corrupted?
+
+#queriesSelect_i <- c("emissCO2BySectorNoBio")  # c("All")
+queriesSelect_i <- c("CO2 emissions by sector (no bio)") # c("All")
 regionsSelect_i <- c("Colombia")
 dataGCAM<-metis.readgcam(reReadData = F,  # F
                          scenOrigNames = scenOrigNames_i,
@@ -63,8 +68,7 @@ dataGCAM<-metis.readgcam(reReadData = F,  # F
 
 
 #Eliminate unneeded queries
-queries_relevant <- c('CO2 emissions by sector (no bio)')
-
+queries_relevant <- queries  # c('CO2 emissions by sector (no bio)')
 # Create a single dataframe that stores all all experiments under a single query.
 reorg_prj <- vector("list", length(queries_relevant))
 names(reorg_prj) <- queries_relevant
@@ -80,8 +84,6 @@ for(query in queries_relevant){
   }
 }
 
-
-
 # Save this R data object to avoid having to go through this import and transformation process again.
 saveRDS(reorg_prj, file='C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output/Reorg_allResults.proj')
 # Plot CO2 emissions across the 540 scenarios.
@@ -89,9 +91,9 @@ fig_path <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/post_process
 y_lbl <- 'CO2 Emissions (Mt)'
 x_lbl <- 'Time'
 title <- 'Emissions Uncertainty'
-plot_df <- reorg_prj$`CO2 emissions by sector (no bio)` %>% 
-  group_by(scenario, region, experiment, old_scen_name, Units, year) %>% 
-  summarize(value=(44/12)*sum(value)) %>% 
+plot_df <- reorg_prj$`CO2 emissions by sector (no bio)` %>%
+  group_by(scenario, region, experiment, old_scen_name, Units, year) %>%
+  summarize(value=(44/12)*sum(value)) %>%
   filter(scenario %in% c("DDP", "ColPol"))
 x_min <- 2010
 x_max <- 2050
@@ -99,7 +101,7 @@ plot_scens <- c("ColPol", "DDP")
 line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max)
 # Function to make plots
 line_plot <- function(plot_df, fig_path, plot_scens, y_lbl=NULL,
-                      x_lbl=NULL, y_max=NULL, y_min=NULL, 
+                      x_lbl=NULL, y_max=NULL, y_min=NULL,
                       all_same_color=1, title=NULL, legend_on=TRUE,
                       plot_var=NULL, x_min=NULL, x_max=NULL){
   # ggplot2 Theme
@@ -128,11 +130,11 @@ line_plot <- function(plot_df, fig_path, plot_scens, y_lbl=NULL,
   for(plot_scen in plot_scens){
     ctr <- ctr+1
     plot_df_filt <- plot_df %>% filter(scenario==plot_scen)
-    p <- p + geom_line(size=0.5, color=color_list[ctr], 
-                       data=plot_df_filt, mapping = aes(x = year, y = value, group=experiment))  # colour=scenario 
-    
+    p <- p + geom_line(size=0.5, color=color_list[ctr],
+                       data=plot_df_filt, mapping = aes(x = year, y = value, group=experiment))  # colour=scenario
+
   }
-  
+
   p <- p + xlab(x_lbl) + ylab(y_lbl)
   if(!is.null(y_min)){
     p<-p + scale_y_continuous(limits=c(y_min - 0.1*abs(y_min), 1.1*y_max))
