@@ -5,9 +5,15 @@ library(dplyr)
 library(tidyr)
 library('metis')
 
+# Source plotting function
+source('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/post_processing/RDM_plotting.R')
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Importing and Reorganizing data file that contains GCAM query results across the hundreds of RDM GCAM runs.
+
 # Load single file produced from RDM experiment.
 base_dir <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output/')
-output_file <- c('04022020.dat')
+output_file <- c('04292020.dat')
 prj_path <- paste0(base_dir, output_file)
 prj <- loadProject(prj_path)
 
@@ -27,46 +33,11 @@ for(experiment in names(prj)){
     prj[[experiment]][[query]] <- qry  # replace query result for this query and experiment with modified dataframe
   }
 }
-prj_copy <- prj  # Stores the original prj, before we cut extra stuff out of it.
-
-num_runs <- 180
-short_list <- c()
-scens <- c("Reference", "ColPol", "DDP")
-for(scen in scens){
-  for(run in seq(1:num_runs)){
-    if(paste0(scen, "_", run-1) %in% names(prj)){
-      short_list <- append(short_list, paste0(scen, "_", run-1))
-    }
-  }
-}
-prj <- prj[short_list]  # Eliminate any extra/unnecessary runs stored in the .dat file from PIC.
-# Save the new file so it can then be imported in the way Metis expects
-saveRDS(prj, file='C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output/04022020_Trim.dat')
-#Import file to Metis
-scenOrigNames_i = c("Reference", "ColPol", "DDP")
-scenNewNames_i = c("Reference", "Current_Policy", "DDP")
-#paramsSelect_i <- c('All')
-paramsSelect_i <- c('emissCO2BySectorNoBio')
-# Connect to gcam database or project
-dataProjPath_i <- paste("C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output") # Path to dataProj file.
-dataProj_i <-"04022020.dat"  # Use if gcamdata has been saved as .proj file
-
-# LOOK INTO ERROR WITH TRIM FILE...corrupted?
-
-#queriesSelect_i <- c("emissCO2BySectorNoBio")  # c("All")
-queriesSelect_i <- c("CO2 emissions by sector (no bio)") # c("All")
-regionsSelect_i <- c("Colombia")
-dataGCAM<-metis.readgcam(reReadData = F,  # F
-                         scenOrigNames = scenOrigNames_i,
-                         scenNewNames = scenNewNames_i,
-                         dataProj = dataProj_i,
-                         dataProjPath = dataProjPath_i,
-                         regionsSelect = regionsSelect_i,
-                         paramsSelect=paramsSelect_i,
-                         queriesSelect=queriesSelect_i)
-
-
-
+# Create dataFrame that will store all uncertainty results to be plotted
+plot_df <- data.frame(scenario = character(), experiment = integer(), region = character(), param = character(),
+                      year = integer(), value = numeric(), Units = integer())
+#-----------------------------------------------------------------------------------------------------------------------
+# Process data for non-Metis-based analysis
 #Eliminate unneeded queries
 queries_relevant <- queries  # c('CO2 emissions by sector (no bio)')
 # Create a single dataframe that stores all all experiments under a single query.
@@ -83,81 +54,113 @@ for(query in queries_relevant){
     reorg_prj[[query]] <- rbind(reorg_prj[[query]], prj[[experiment]][[query]] %>% filter(region=="Colombia"))
   }
 }
+#-----------------------------------------------------------------------------------------------------------------------
+# Use Metis to process certain complex queries that (1) require significant post-processing, and (2) for which
+# specific Metis functions/handing have already been developed. For example, this includes electricity investments. We
+# produce a single ".proj" file on PIC that stores the GCAM queries for hundreds or thousands of GCAM runs. This
+# ".proj" file is already in the format required by Metis, so very little pre-processing is required below. However,
+# some post-processing of metis-results is required to get the Metis outputs formatted for plotting.
 
-# Save this R data object to avoid having to go through this import and transformation process again.
-saveRDS(reorg_prj, file='C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output/Reorg_allResults.proj')
-# Plot CO2 emissions across the 540 scenarios.
-fig_path <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/post_processing/figures/CO2.png')
-y_lbl <- 'CO2 Emissions (Mt)'
+# Select relevant parameters that we want to process in Metis. The rest (which are simpler) will be processed here in
+# this script, not in Metis.
+paramsSelect_i <- c('elecNewCapCost')   # c('emissCO2BySectorNoBio')  # c('All')
+dataProjPath_i <- paste("C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output") # Path to dataProj file.
+dataProj_i <-"04292020.proj"  # Use if gcamdata has been saved as .proj file
+RDM_results_for_Metis <- loadProject(paste0(dataProjPath_i, "/", dataProj_i))
+scenOrigNames_i <- listScenarios(RDM_results_for_Metis)
+regionsSelect_i <- c("Colombia")
+dataGCAM<-metis.readgcam(reReadData = F,  # F
+                         scenOrigNames = scenOrigNames_i,
+                         dataProj = dataProj_i,
+                         dataProjPath = dataProjPath_i,
+                         regionsSelect = regionsSelect_i,
+                         paramsSelect=paramsSelect_i)
+
+# Post-process Metis outputs so that you have Scenarios and experiments correctly broken out. For example, there are 80
+# experiments per scenario. All should have the same scenario name (e.g., "Reference")
+reorg_dataGCAM_data <- dataGCAM$data %>%
+  mutate(experiment=substring(scenario, regexpr("_", scenario) + 1, nchar(scenario))) %>%
+  mutate(old_scen_name=scenario) %>%
+  mutate(scenario=substring(scenario, 0, regexpr("_", scenario) - 1)) %>%
+  rename(year = x) %>%
+  rename(Units = units)
+plot_df_append <- reorg_dataGCAM_data %>%
+  group_by(scenario, region, experiment, year, param, Units) %>%
+  summarize(value = sum(value)) %>%
+  ungroup()
+plot_df_append <- plot_df_append[, c(1,3,2,6,5,7,4)]
+plot_df <- rbind(plot_df, plot_df_append)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Produce uncertainty plots that look across hundreds of Reference, DDP, and Current_Policy scenarios
+
+# General plot assumptions
+fig_base_path <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/post_processing/figures/')
+x_min <- 2025
+x_max <- 2050
+plot_scens <- c("ColPol", "DDP")
 x_lbl <- 'Time'
+plot_scenarios <- c('DDP', 'ColPol')
+
+# Plot CO2 emissions across numerous RDM runs
+param <- 'CO2Emissions_NoBio'
+y_lbl <- 'CO2 Emissions (Mt)'
 title <- 'Emissions Uncertainty'
+fname <- paste0(fig_base_path, param, '.png')
 plot_df <- reorg_prj$`CO2 emissions by sector (no bio)` %>%
   group_by(scenario, region, experiment, old_scen_name, Units, year) %>%
   summarize(value=(44/12)*sum(value)) %>%
-  filter(scenario %in% c("DDP", "ColPol"))
-x_min <- 2010
-x_max <- 2050
-plot_scens <- c("ColPol", "DDP")
+  filter(scenario %in% plot_scenarios)
 line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max)
-# Function to make plots
-line_plot <- function(plot_df, fig_path, plot_scens, y_lbl=NULL,
-                      x_lbl=NULL, y_max=NULL, y_min=NULL,
-                      all_same_color=1, title=NULL, legend_on=TRUE,
-                      plot_var=NULL, x_min=NULL, x_max=NULL){
-  # ggplot2 Theme
-  z_theme <<- theme_bw() +
-    theme(
-      text =                element_text(family = NULL, face = "plain",colour = "black", size = 10 ,hjust = 0.5,
-                                         vjust = 0.5, angle = 0, lineheight = 0.9)
-      , axis.text.x =       element_text(size=8)
-      , axis.text.y =       element_text(size=8)
-      ,axis.title.x =       element_text(vjust = -1, margin=margin(t=1,unit="line"))
-      ,axis.title.y =       element_text(angle = 90, vjust = 2, margin=margin(r=1,unit="line"))
-      ,legend.key =         element_blank()
-      ,legend.key.size =    unit(1.5, 'lines')
-      ,legend.text =        element_text(size = 8, colour = "black")
-      ,legend.title =       element_text(size = rel(1.2), face = NULL, hjust = 0, colour = "black")
-      ,strip.background =   element_rect(fill = NA, colour = "black")
-      ,plot.margin =        unit(c(1, 1, 1, 1), "lines")
-      ,plot.title=          element_text(face="bold", hjust=0.2, vjust = -4, margin = margin(b=20), size=8)
-      ,legend.position =    c(0.95, 0.95)
-    )
 
-#  p <- ggplot(data=plot_df, mapping = aes(x = year, y = value, colour=scenario, fill=scenario))
-  p <- ggplot()
-  ctr <- 0
-  color_list <- c('black', 'dodgerblue3')  #  #de2d26, #fc9272
-  for(plot_scen in plot_scens){
-    ctr <- ctr+1
-    plot_df_filt <- plot_df %>% filter(scenario==plot_scen)
-    p <- p + geom_line(size=0.5, color=color_list[ctr],
-                       data=plot_df_filt, mapping = aes(x = year, y = value, group=experiment))  # colour=scenario
-
-  }
-
-  p <- p + xlab(x_lbl) + ylab(y_lbl)
-  if(!is.null(y_min)){
-    p<-p + scale_y_continuous(limits=c(y_min - 0.1*abs(y_min), 1.1*y_max))
-  }
-  if(!is.null(x_min)){
-    p<-p + scale_x_continuous(limits=c(x_min, x_max))
-  }
-  if(legend_on==TRUE){
-    p <- p + guides(color=legend_on)
-  }
-  p <- p + ggtitle(title)
-  p <- p + z_theme
-  p
-  ggsave(fig_path, dpi=900, width=2.5, height=2.5, units="in")
+# Plot investments/stranded assets across the numerous RDM runs
+params <- c("elecCumCapGW", "elecNewCapGW", "elecCumCapCost", "elecNewCapCost", "elecAnnualRetPrematureGW",
+            "elecCumRetPrematureGW", "elecAnnualRetPrematureCost", "elecCumRetPrematureCost")
+ymin_list <- list("elecCumCapGW" = NULL, "elecNewCapGW" = NULL, "elecCumCapCost" = NULL, "elecNewCapCost" = NULL,
+                  "elecAnnualRetPrematureGW" = -5, "elecCumRetPrematureGW" = -5,
+                  "elecAnnualRetPrematureCost" = -5, "elecCumRetPrematureCost" = -10)
+ymax_list <- list("elecCumCapGW" = NULL, "elecNewCapGW" = NULL, "elecCumCapCost" = NULL, "elecNewCapCost" = NULL,
+                  "elecAnnualRetPrematureGW" = 1, "elecCumRetPrematureGW" = 1,
+                  "elecAnnualRetPrematureCost" = 1, "elecCumRetPrematureCost" = 1)
+title <- 'Performance Metric Uncertainty'
+for(paramSelect in params){
+  fig_path <- paste0(fig_base_path, paramSelect, '.png')
+  plot_df_sub <- plot_df %>%
+    filter(param==paramSelect)
+  y_lbl <- unique(plot_df_sub$Units)[1]
+  line_plot(plot_df_sub, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max,
+            y_min = ymin_list[[paramSelect]], y_max = ymax_list[[paramSelect]])
 }
+#-----------------------------------------------------------------------------------------------------------------------
+# Produce individual and comparison plots of individual scenarios to evaluate outcomes in more detail.
+
+scenOrigNames_i = c("Reference", "ColPol", "DDP")
+scenNewNames_i = c("Reference", "Current_Policy", "DDP")
+#scenNewNames = scenNewNames_i,
+#-----------------------------------------------------------------------------------------------------------------------
+
+new <- reorg_dataGCAM_data %>%
+  filter(scenario=='Reference', region=='Colombia', param=='elecNewCapCost', experiment==100) %>%
+  filter(year>=2020, year<=2050) %>%
+  select(scenario, region, param, year, value, Units, experiment, class1) %>%
+  group_by(scenario, region, experiment, year) %>%
+  summarize(value = sum(value)) %>%
+  ungroup()
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Select three scenarios for which you want to produce individual/comparison plots.
-Reference <- prj[['Reference_110']]
-ColPol <- prj[['ColPol_110']]
-DDP <- prj[['DDP_110']]
-saveRDS(Reference, file = "Reference_110.rds")
-saveRDS(ColPol, file = "ColPol_110.rds")
-saveRDS(DDP, file = "DDP_110.rds")
-scenarios <- c('Reference', 'ColPol', 'DDP')
-#-----------------------------------------------------------------------------------------------------------------------
+wheatprice<-price%>%group_by(scenario, region, experiment, old_scen_name,Units, year,market) %>%summarize(value=sum(value))%>%
+  filter(market %in% c("globalWheat"))
+price2015<-wheatprice%>%  group_by(scenario, region, experiment, old_scen_name,Units, year) %>%
+  summarize(value=sum(value))%>%  filter(year %in% c("2015"))
+for(i in seq(length(wheatprice$value))){
+  for(j in seq(length(price2015$value))){
+    if(wheatprice$old_scen_name[i]==price2015$old_scen_name[j]){
+      wheatprice$value[i]<-(((wheatprice$value[i]-price2015$value[j]))/price2015$value[j])+1
+    }
+  }
+}
+wheatprice$Units<-"2015 reference"
+wheatprice<-add_column(wheatprice,Metric="Wheat price")
+wheatprice<-wheatprice%>%
+  group_by(scenario, region, experiment, old_scen_name,Units, year,Metric) %>%
+  summarize(value=sum(value))%>%  filter(year %in% c(2010,2015,2020,2025,2030,2035,2040,2045,2050))
