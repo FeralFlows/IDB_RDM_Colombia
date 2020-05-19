@@ -3,6 +3,18 @@
 
 #####, Colombia Policies
 
+31,world/+{name}region,region/+{name}ghgpolicy,ghgpolicy/+market,ghgpolicy/+{year=2020}constraint,ghgpolicy/+{year=2025}constraint,ghgpolicy/+{year=2030}constraint,ghgpolicy/+{year=2035}constraint,ghgpolicy/+{year=2040}constraint,ghgpolicy/+{year=2045}constraint,ghgpolicy/+{year=2050}constraint,ghgpolicy/+{year=2055}constraint,ghgpolicy/+{year=2060}constraint,ghgpolicy/+{year=2065}constraint,ghgpolicy/+{year=2070}constraint,ghgpolicy/+{year=2075}constraint,ghgpolicy/+{year=2080}constraint,ghgpolicy/+{year=2085}constraint,ghgpolicy/+{year=2090}constraint,ghgpolicy/+{year=2095}constraint,ghgpolicy/+{year=2100}constraint,scenario,scenario/world,world/region
+
+32,world/+{name}region,region/+{name}ghgpolicy,ghgpolicy/+market,scenario,scenario/world,world/region
+
+20,world/+{name}region,region/+{name}linked-ghg-policy,linked-ghg-policy/+{fillout=1;year=2020}price-adjust,linked-ghg-policy/+{fillout=1;year=2020}demand-adjust,linked-ghg-policy/+market,linked-ghg-policy/+linked-policy,linked-ghg-policy/+price-unit,linked-ghg-policy/+output-unit,scenario,scenario/world,world/region
+
+9,world/+{name}region,region/+{name}ghgpolicy,ghgpolicy/+market,ghgpolicy/+{year=2020}fixedTax,ghgpolicy/+{year=2025}fixedTax,ghgpolicy/+{year=2030}fixedTax,ghgpolicy/+{year=2035}fixedTax,ghgpolicy/+{year=2040}fixedTax,ghgpolicy/+{year=2045}fixedTax,ghgpolicy/+{year=2050}fixedTax,ghgpolicy/+{year=2055}fixedTax,ghgpolicy/+{year=2060}fixedTax,ghgpolicy/+{year=2065}fixedTax,ghgpolicy/+{year=2070}fixedTax,ghgpolicy/+{year=2075}fixedTax,ghgpolicy/+{year=2080}fixedTax,ghgpolicy/+{year=2085}fixedTax,ghgpolicy/+{year=2090}fixedTax,ghgpolicy/+{year=2095}fixedTax,ghgpolicy/+{year=2100}fixedTax,scenario,scenario/world,world/region
+
+999,world/+{name}region,region/+{name}ghgpolicy,ghgpolicy/+market,scenario,scenario/world,world/region 
+
+10,world/+{name}region,region/+{name}ghgpolicy,ghgpolicy/+market,ghgpolicy/+{year=2020}constraint,scenario,scenario/world,world/region
+
 SecondaryOutput_NoCool, world/+{name}region, region/+{name;nocreate=1}supplysector, supplysector/+{name;nocreate=1}subsector, subsector/+{name;nocreate=1}stub-technology, stub-technology/+{year}period, period/+{name}res-secondary-output, res-secondary-output/+output-ratio, scenario, scenario/world
 
 SecondaryOutput_Cool, world/+{name}region, region/+{name;nocreate=1}pass-through-sector, pass-through-sector/+{name;nocreate=1}subsector, subsector/+{name;nocreate=1}stub-technology, stub-technology/+{year}period, period/+{name}res-secondary-output, res-secondary-output/+output-ratio, scenario, scenario/world
@@ -14,6 +26,8 @@ StubTechAdjCoef_NoCool, world/+{name}region, region/+{name;nocreate=1}supplysect
 StubTechAdjCoef_Cool, world/+{name}region, region/+{name;nocreate=1}pass-through-sector, pass-through-sector/+{name;nocreate=1}subsector, subsector/+{name;nocreate=1}stub-technology, stub-technology/+{year}period, period/+{name}minicam-energy-input, minicam-energy-input/+market-name, minicam-energy-input/+{year}adjusted-coefficient,minicam-energy-input/+adjusted-coefficient,period/+{name}CO2,scenario,scenario/world,world/region
 
 Bldg_ShellEff, world/+{name}region, region/+{name}gcam-consumer, gcam-consumer/+{name}nodeInput, nodeInput/+{name}building-node-input, building-node-input/+{year}shell-conductance,building-node-input/+shell-conductance,scenario,scenario/world,world/region
+
+Bldg_Appliance_Eff, world/+{name}region, region/+{name}supplysector, supplysector/+{name}subsector, subsector/+{name}stub-technology, stub-technology/+{year}period, period/+{name}minicam-energy-input, minicam-energy-input/+efficiency, minicam-energy-input/+market-name, scenario, scenario/world
 
 IncomeElasticity_trn, world/+{name}region, region/+{name}energy-final-demand, energy-final-demand/+perCapitaBased, energy-final-demand/final-energy-consumer, energy-final-demand/+{year}income-elasticity, energy-final-demand/+income-elasticity, scenario, scenario/world
 
