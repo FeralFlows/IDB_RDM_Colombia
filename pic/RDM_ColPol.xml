@@ -111,11 +111,13 @@
 		<!--Argentina-specific files-->
 	    <!-- Socio-Economics -->
 		<Value name = "argentina_population_gdp">../input/idb/reference/Argentina_refPop_gSSP2.xml</Value>
-	
+       <Value name = "LowerRenewablesCosts">../input/idb/rdm/L223.GlobalIntTechCapital_elec_low.xml</Value>
+       <Value name = "LowerElecCosts">../input/idb/rdm/L223.GlobalTechCapital_elec_low.xml</Value>	
+
        <Value name = "rps policy file">../input/idb/rdm/Colombia_RPS.xml</Value>
-       <Value name = "TradBiomass_SW">../input/idb/rdm/TradBiomass_SW.xml</Value>
+       <!--<Value name = "TradBiomass_SW">../input/idb/rdm/TradBiomass_SW.xml</Value>-->
        <Value name = "LDV_BEV_Interp">../input/idb/rdm/LDV_BEV_Interp.xml</Value>
-       <Value name = "TranSubsecInterp">../input/idb/rdm/TranSubsecInterp.xml</Value>
+       <!--<Value name = "TranSubsecInterp">../input/idb/rdm/TranSubsecInterp.xml</Value>-->
        <Value name = "IncomeElasticity_trn">../input/idb/rdm/IncomeElasticity_trn.xml</Value>
        <Value name = "Bldg_ShellEff">../input/idb/rdm/Bldg_ShellEff.xml</Value>
        <Value name = "IndustrialStubTechEff">../input/idb/rdm/IndustrialStubTechEff.xml</Value>
@@ -125,7 +127,7 @@
 
 	</ScenarioComponents>
 	<Strings>
-		<Value name="scenarioName">All</Value>
+		<Value name="scenarioName">ColPol</Value>
 		<Value name="debug-region">Colombia</Value>
 		<Value name="MAGICC-input-dir">../input/magicc/inputs</Value>
 		<Value name="MAGICC-output-dir">../output</Value>

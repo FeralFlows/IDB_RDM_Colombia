@@ -110,6 +110,8 @@
       <Value name = "Uruguay_refWat_ref">../input/idb/reference/Uruguay_refWat_L2072.AgCoef_IrrWaterWdraw_ag_mgmt.xml</Value>
 		<!--Argentina-specific files-->
 	    <!-- Socio-Economics -->
+       <Value name = "LowerRenewablesCosts">../input/idb/rdm/L223.GlobalIntTechCapital_elec_low.xml</Value>
+       <Value name = "LowerElecCosts">../input/idb/rdm/L223.GlobalTechCapital_elec_low.xml</Value>
 		<Value name = "argentina_population_gdp">../input/idb/reference/Argentina_refPop_gSSP2.xml</Value>
        <Value name = "policy">../input/idb/policy/CarbonTax_CO2_NonCO2_CO_ARG.xml</Value>
        <Value name = "policy link file">../input/idb/policy/CarbonTax_CO2_NonCO2_LINK_CO_ARG.xml</Value>
@@ -119,7 +121,7 @@
 	
 	</ScenarioComponents>
 	<Strings>
-		<Value name="scenarioName">All</Value>
+		<Value name="scenarioName">DDP</Value>
 		<Value name="debug-region">Colombia</Value>
 		<Value name="MAGICC-input-dir">../input/magicc/inputs</Value>
 		<Value name="MAGICC-output-dir">../output</Value>
