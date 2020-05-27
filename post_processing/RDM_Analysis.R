@@ -4,7 +4,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library('metis')
-
+library(data.table)
 # Source plotting function
 source('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/post_processing/RDM_plotting.R')
 
@@ -13,9 +13,12 @@ source('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/post_processing/RDM
 
 # Load single file produced from RDM experiment.
 base_dir <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output/')
-output_file <- c('04292020.dat')
+output_file <- c('05242020.dat')
 prj_path <- paste0(base_dir, output_file)
 prj <- loadProject(prj_path)
+
+# See what size of data we are working with
+print(object.size(prj), units = 'Mb')
 
 # Create empty data frame
 queries <- listQueries(prj)
@@ -27,12 +30,15 @@ for(experiment in names(prj)){
     exp <- prj[[experiment]]
     qry <- exp[[query]]
     qry <- qry %>%
+      mutate(scenario = gsub('DDP_Delayed_EndPt', 'DelayedEndPt', scenario)) %>% 
+      mutate(scenario = gsub('DDP_Delayed_CumEmiss', 'DelayedCumEmiss', scenario)) %>% 
       mutate(experiment=substring(scenario, regexpr("_", scenario) + 1, nchar(scenario))) %>%
-      mutate(old_scen_name=scenario) %>%
+      mutate(old_scen_name=scenario) %>% 
       mutate(scenario=substring(scenario, 0, regexpr("_", scenario)-1))
     prj[[experiment]][[query]] <- qry  # replace query result for this query and experiment with modified dataframe
   }
 }
+
 # Create dataFrame that will store all uncertainty results to be plotted
 plot_df <- data.frame(scenario = character(), experiment = integer(), region = character(), param = character(),
                       year = integer(), value = numeric(), Units = integer())
@@ -41,18 +47,15 @@ plot_df <- data.frame(scenario = character(), experiment = integer(), region = c
 #Eliminate unneeded queries
 queries_relevant <- queries  # c('CO2 emissions by sector (no bio)')
 # Create a single dataframe that stores all all experiments under a single query.
-reorg_prj <- vector("list", length(queries_relevant))
-names(reorg_prj) <- queries_relevant
-
-for(item in names(reorg_prj)){
-  reorg_prj[[item]] <- data.frame()
-}
-for(query in queries_relevant){
-  for(experiment in names(prj[short_list])){
-    print(experiment)
-    #print(reorg_prj)
-    reorg_prj[[query]] <- rbind(reorg_prj[[query]], prj[[experiment]][[query]] %>% filter(region=="Colombia"))
-  }
+reorg_prj <- list()
+for (query in queries_relevant){
+    prj_isolate_query <- list()
+    for (experiment in names(prj)){
+      prj_isolate_query[[experiment]] <- prj[[experiment]][[query]]
+    }
+      # Across all experiments, isolate query, so we can run rbindlist on prj_isolate_query and store it in reorg_prj
+    reorg_prj[[query]] <- rbindlist(prj_isolate_query) 
+    print(paste0("Completing ", "query: ", query))
 }
 #-----------------------------------------------------------------------------------------------------------------------
 # Use Metis to process certain complex queries that (1) require significant post-processing, and (2) for which
@@ -65,7 +68,7 @@ for(query in queries_relevant){
 # this script, not in Metis.
 paramsSelect_i <- c('elecNewCapCost')   # c('emissCO2BySectorNoBio')  # c('All')
 dataProjPath_i <- paste("C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output") # Path to dataProj file.
-dataProj_i <-"04292020.proj"  # Use if gcamdata has been saved as .proj file
+dataProj_i <-"05072020.proj"  # Use if gcamdata has been saved as .proj file
 RDM_results_for_Metis <- loadProject(paste0(dataProjPath_i, "/", dataProj_i))
 scenOrigNames_i <- listScenarios(RDM_results_for_Metis)
 regionsSelect_i <- c("Colombia")
@@ -133,12 +136,53 @@ for(paramSelect in params){
 }
 #-----------------------------------------------------------------------------------------------------------------------
 # Produce individual and comparison plots of individual scenarios to evaluate outcomes in more detail.
+# Select three representative scenarios (1 Reference, 1 Current Policies, 1 DDP) from the larger prj file
+Reference <- prj[['Reference_110']]
+ColPol <- prj[['ColPol_110']]
+DDP <- prj[['DDP_110']]
+# Save a .proj file that only contains only the 3 main scenarios
+saveProject()
+# Read in all data using readgcam
+paramsSelect_i <- c('All')
+dataProjPath_i <- paste("C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output") # Path to dataProj file.
+dataProj_i <-"05072020.proj"  # Use if gcamdata has been saved as .proj file
+RDM_results_for_Metis <- loadProject(paste0(dataProjPath_i, "/", dataProj_i))
+scenOrigNames_i <- listScenarios(RDM_results_for_Metis)
+regionsSelect_i <- c("Colombia")
+dataGCAM<-metis.readgcam(reReadData = F,  # F
+                         scenOrigNames = scenOrigNames_i,
+                         dataProj = dataProj_i,
+                         dataProjPath = dataProjPath_i,
+                         regionsSelect = regionsSelect_i,
+                         paramsSelect=paramsSelect_i)
+# Plot
+rTable_i <- dataGCAM$data;
+paramsSelect_i <- "All"
+charts<-metis.chartsProcess(
+  rTable=rTable_i, # Default is NULL
+  #dataTables=dataTables_i, # Default is NULL
+  paramsSelect=paramsSelect_i, # Default is "All"
+  regionsSelect=regionsSelect_i, # Default is "All"
+  xCompare=c("2010","2030","2050"), # Default is c("2015","2030","2050","2100")
+  scenRef="Reference", # Default is NULL
+  dirOutputs='C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output/metis', # Default is paste(getwd(),"/outputs",sep="")
+  regionCompareOnly=0, # Default 0. If set to 1, will only run comparison plots and not individual
+  scenarioCompareOnly=0,
+  regionCompare=0,
+  useNewLabels = 0,
+  folderName = "03182020",
+  xRange = c(2020, 2030, 2040, 2050),
+  colOrder1 = c("Reference", "Current_Policy", "DDP"), #"Original",
+  colOrderName1 = "scenario",
+  pdfpng='pdf') # Default 0. If set to 1, will only run comparison plots and not individual
+
 
 scenOrigNames_i = c("Reference", "ColPol", "DDP")
 scenNewNames_i = c("Reference", "Current_Policy", "DDP")
+
 #scenNewNames = scenNewNames_i,
 #-----------------------------------------------------------------------------------------------------------------------
-
+# EXTRA CODE
 new <- reorg_dataGCAM_data %>%
   filter(scenario=='Reference', region=='Colombia', param=='elecNewCapCost', experiment==100) %>%
   filter(year>=2020, year<=2050) %>%
@@ -146,21 +190,4 @@ new <- reorg_dataGCAM_data %>%
   group_by(scenario, region, experiment, year) %>%
   summarize(value = sum(value)) %>%
   ungroup()
-
 #-----------------------------------------------------------------------------------------------------------------------
-wheatprice<-price%>%group_by(scenario, region, experiment, old_scen_name,Units, year,market) %>%summarize(value=sum(value))%>%
-  filter(market %in% c("globalWheat"))
-price2015<-wheatprice%>%  group_by(scenario, region, experiment, old_scen_name,Units, year) %>%
-  summarize(value=sum(value))%>%  filter(year %in% c("2015"))
-for(i in seq(length(wheatprice$value))){
-  for(j in seq(length(price2015$value))){
-    if(wheatprice$old_scen_name[i]==price2015$old_scen_name[j]){
-      wheatprice$value[i]<-(((wheatprice$value[i]-price2015$value[j]))/price2015$value[j])+1
-    }
-  }
-}
-wheatprice$Units<-"2015 reference"
-wheatprice<-add_column(wheatprice,Metric="Wheat price")
-wheatprice<-wheatprice%>%
-  group_by(scenario, region, experiment, old_scen_name,Units, year,Metric) %>%
-  summarize(value=sum(value))%>%  filter(year %in% c(2010,2015,2020,2025,2030,2035,2040,2045,2050))
