@@ -30,10 +30,10 @@ for(experiment in names(prj)){
     exp <- prj[[experiment]]
     qry <- exp[[query]]
     qry <- qry %>%
-      mutate(scenario = gsub('DDP_Delayed_EndPt', 'DelayedEndPt', scenario)) %>% 
-      mutate(scenario = gsub('DDP_Delayed_CumEmiss', 'DelayedCumEmiss', scenario)) %>% 
+      mutate(scenario = gsub('DDP_Delayed_EndPt', 'DelayedEndPt', scenario)) %>%
+      mutate(scenario = gsub('DDP_Delayed_CumEmiss', 'DelayedCumEmiss', scenario)) %>%
       mutate(experiment=substring(scenario, regexpr("_", scenario) + 1, nchar(scenario))) %>%
-      mutate(old_scen_name=scenario) %>% 
+      mutate(old_scen_name=scenario) %>%
       mutate(scenario=substring(scenario, 0, regexpr("_", scenario)-1))
     prj[[experiment]][[query]] <- qry  # replace query result for this query and experiment with modified dataframe
   }
@@ -54,7 +54,7 @@ for (query in queries_relevant){
       prj_isolate_query[[experiment]] <- prj[[experiment]][[query]]
     }
       # Across all experiments, isolate query, so we can run rbindlist on prj_isolate_query and store it in reorg_prj
-    reorg_prj[[query]] <- rbindlist(prj_isolate_query) 
+    reorg_prj[[query]] <- rbindlist(prj_isolate_query)
     print(paste0("Completing ", "query: ", query))
 }
 #-----------------------------------------------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ for (query in queries_relevant){
 # this script, not in Metis.
 paramsSelect_i <- c('elecNewCapCost')   # c('emissCO2BySectorNoBio')  # c('All')
 dataProjPath_i <- paste("C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/output") # Path to dataProj file.
-dataProj_i <-"05072020.proj"  # Use if gcamdata has been saved as .proj file
+dataProj_i <-"select_queries_metis.proj"  # Use if gcamdata has been saved as .proj file
 RDM_results_for_Metis <- loadProject(paste0(dataProjPath_i, "/", dataProj_i))
 scenOrigNames_i <- listScenarios(RDM_results_for_Metis)
 regionsSelect_i <- c("Colombia")
@@ -82,6 +82,8 @@ dataGCAM<-metis.readgcam(reReadData = F,  # F
 # Post-process Metis outputs so that you have Scenarios and experiments correctly broken out. For example, there are 80
 # experiments per scenario. All should have the same scenario name (e.g., "Reference")
 reorg_dataGCAM_data <- dataGCAM$data %>%
+  mutate(scenario = gsub('DDP_Delayed_EndPt', 'DelayedEndPt', scenario)) %>%
+  mutate(scenario = gsub('DDP_Delayed_CumEmiss', 'DelayedCumEmiss', scenario)) %>%
   mutate(experiment=substring(scenario, regexpr("_", scenario) + 1, nchar(scenario))) %>%
   mutate(old_scen_name=scenario) %>%
   mutate(scenario=substring(scenario, 0, regexpr("_", scenario) - 1)) %>%
@@ -94,6 +96,11 @@ plot_df_append <- reorg_dataGCAM_data %>%
 plot_df_append <- plot_df_append[, c(1,3,2,6,5,7,4)]
 plot_df <- rbind(plot_df, plot_df_append)
 
+
+
+
+
+
 #-----------------------------------------------------------------------------------------------------------------------
 # Produce uncertainty plots that look across hundreds of Reference, DDP, and Current_Policy scenarios
 
@@ -101,9 +108,9 @@ plot_df <- rbind(plot_df, plot_df_append)
 fig_base_path <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/post_processing/figures/')
 x_min <- 2025
 x_max <- 2050
-plot_scens <- c("ColPol", "DDP")
+plot_scens <- c('DelayedEndPt', 'DDP', 'DelayedCumEmiss') # c("ColPol", "DDP")
 x_lbl <- 'Time'
-plot_scenarios <- c('DDP', 'ColPol')
+plot_scenarios <- c('DelayedEndPt', 'DDP', 'DelayedCumEmiss') # ,  c('DDP', 'ColPol')
 
 # Plot CO2 emissions across numerous RDM runs
 param <- 'CO2Emissions_NoBio'
@@ -131,8 +138,8 @@ for(paramSelect in params){
   plot_df_sub <- plot_df %>%
     filter(param==paramSelect)
   y_lbl <- unique(plot_df_sub$Units)[1]
-  line_plot(plot_df_sub, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max,
-            y_min = ymin_list[[paramSelect]], y_max = ymax_list[[paramSelect]])
+  line_plot(plot_df_sub, fig_path, plot_scens, y_lbl=y_lbl, x_min=x_min, x_max=x_max,
+            y_min = ymin_list[[paramSelect]], y_max = ymax_list[[paramSelect]])  # title=title, x_lbl=x_lbl,
 }
 #-----------------------------------------------------------------------------------------------------------------------
 # Produce individual and comparison plots of individual scenarios to evaluate outcomes in more detail.
