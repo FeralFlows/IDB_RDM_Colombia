@@ -1,15 +1,15 @@
-install.packages('fansi')
-install.packages("backports")
-install.packages("devtools")
-install.packages("sf")
-install.packages("magick")
-library(devtools)
-install_github('JGCRI/rgcam', build_vignettes=TRUE, force = TRUE)
-install.packages("rgdal")
-install.packages("tmap")
-
-library('tmap')
-install_github('JGCRI/metis', build_vignettes=TRUE, force = TRUE)
+# install.packages('fansi')
+# install.packages("backports")
+# install.packages("devtools")
+# install.packages("sf")
+# install.packages("magick")
+# library(devtools)
+# install_github('JGCRI/rgcam', build_vignettes=TRUE, force = TRUE)
+# install.packages("rgdal")
+# install.packages("tmap")
+# 
+# library('tmap')
+# install_github('JGCRI/metis', build_vignettes=TRUE, force = TRUE)
 
 
 library(tibble)
@@ -105,7 +105,7 @@ line_plot <- function(plot_df, fig_path, plot_scens, y_lbl=NULL,
   p <- p + ggtitle(title)
   p <- p + z_theme
   p
-  ggsave(fig_path, dpi=900, width=2.5, height=2.5, units="in")
+  ggsave(fig_path, dpi=300, width=2.5, height=2.5, units="in")
 }
 
 
@@ -140,7 +140,7 @@ line_plot <- function(plot_df, fig_path, plot_scens, y_lbl=NULL,
   p <- p + z_theme
   p <- p + ggtitle(title)
   p
-  ggsave(fig_path, dpi=900, width=4.5, height=2.5, units="in")
+  ggsave(fig_path, dpi=300, width=4.5, height=2.5, units="in")
 }
 
 plot_scens <- c("DDPXL")#"Reference",
@@ -176,7 +176,7 @@ names(load_factors)[4]<-"technology"
 
 
 base_dir <- c('D:/RDM/runs_512_1_14_2021/query_proj_1_14_2021/')
-export_dir <- c('D:/RDM/runs_512_1_14_2021/output_color/')
+export_dir <- c('D:/RDM/runs_512_1_14_2021/output_grey/')
 if(!file.exists(export_dir)){dir.create(file.path(export_dir), recursive = TRUE)}
 #Query names in folder
 qries<-list.files(base_dir)
@@ -480,7 +480,7 @@ source('D:/RDM/IDB_RDM_Colombia/metrics/RDM_plotting.R')
         summarize(value=sum(value))%>%  filter(region %in% c("Colombia"))%>%mutate(Metric="Water Demand")
       fig_path <- c(paste(export_dir,waterconsump$Metric[1],'.png',sep = ""))
       y_lbl <- paste(waterconsump$Metric[1],' (',waterconsump$Units[1],')',sep = "")
-      line_plot(waterconsump, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE)
+      line_plot(as_tibble(waterconsump), fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE)
       rm(waterconsump)
   }
   
