@@ -154,11 +154,11 @@ x_max <- 2050
 
 
 #Import Reference tables
-GWP<-read.csv('D:/RDM/Colombia-RDM-Analysis-master/metrics/GWP.csv', header = TRUE, sep = ",", dec = ".")
+GWP<-read.csv('D:/RDM/IDB_RDM_Colombia/metrics/GWP.csv', header = TRUE, sep = ",", dec = ".")
 #Import Correction factors
-CF<-read.csv('D:/RDM/Colombia-RDM-Analysis-master/metrics/CorreccionFactor.csv', header = TRUE, sep = ",", dec = ".")
+CF<-read.csv('D:/RDM/IDB_RDM_Colombia/metrics/CorreccionFactor.csv', header = TRUE, sep = ",", dec = ".")
 #Import deforestation emission trajectory
-ghgtraj<-read.csv('D:/RDM/Colombia-RDM-Analysis-master/metrics/GHG traj.csv') %>%
+ghgtraj<-read.csv('D:/RDM/IDB_RDM_Colombia/metrics/GHG traj.csv') %>%
   ##BY 12-17-2020
   gather(key = "year", "value", c("X2015", "X2020", "X2025", "X2030", "X2035", "X2040", "X2045", "X2050"))
 #ghgtraj<-melt(ghgtraj, id.vars=c( "Units" ),variable.name = c("year"))
@@ -168,19 +168,20 @@ ghgtraj$year<-as.numeric(substring(ghgtraj$year,2))
 
 
 #####VKT
-load_factors <- read.csv('D:/RDM/Colombia-RDM-Analysis-master/metrics/L254.StubTranTechLoadFactor.csv', skip=1) %>% filter(region == "Colombia")  
+load_factors <- read.csv('D:/RDM/IDB_RDM_Colombia/metrics/L254.StubTranTechLoadFactor.csv', skip=1) %>% filter(region == "Colombia")  
 ##load_factors%>%rename(sector=supplysector, subsector = tranSubsector, technology = stub.technology)
 names(load_factors)[2]<-"sector"
 names(load_factors)[3]<-"subsector"
 names(load_factors)[4]<-"technology"
 
 
-base_dir <- c('D:/RDM/runs_126_12_22_2020/query_proj_12_22_2020/')
-export_dir <- c('D:/RDM/runs_126_12_22_2020/output_color/')
+base_dir <- c('D:/RDM/runs_512_1_14_2021/query_proj_1_14_2021/')
+export_dir <- c('D:/RDM/runs_512_1_14_2021/output_color/')
+if(!file.exists(export_dir)){dir.create(file.path(export_dir), recursive = TRUE)}
 #Query names in folder
 qries<-list.files(base_dir)
 
-source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
+source('D:/RDM/IDB_RDM_Colombia/metrics/RDM_plotting.R')
 
 #for (qry in qries){
 #  prj_path <- paste0(base_dir, qry)
@@ -395,7 +396,7 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
       title<-""
       fig_path <- c(paste(export_dir,unique(Metrics$Metric)[i],'.png',sep = ""))
       y_lbl <- paste(M$Metric[1],' (',M$Units[1],')',sep = "")
-      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE, plot_by_select_experiment=select_exps)
+      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE, plot_by_select_experiment=FALSE)
     }
     Metrics<-rbind(as_tibble(cCO2),as_tibble(cnonco2),as_tibble(cGHG),as_tibble(cTCO2eqAg),as_tibble(cTCO2eqBk),as_tibble(cTCO2eqComm),as_tibble(cTCO2eqFrght),
                    as_tibble(cTCO2eqFug),as_tibble(cTCO2eqHh),as_tibble(cTCO2eqIE),as_tibble(cTCO2eqIP),as_tibble(cTCO2eqLs),as_tibble(cTCO2eqPass),
@@ -404,7 +405,7 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
       M<-Metrics%>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
       plot_df <- M
       title<-""
-      fig_path <- c(paste(export_dir,'Cumulative/',unique(Metrics$Metric)[i],'.png',sep = ""))
+      fig_path <- c(paste(export_dir,unique(Metrics$Metric)[i],'.png',sep = ""))
       y_lbl <- paste(M$Metric[1],' (',M$Units[1],')',sep = "")
       line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE)
     }
@@ -534,8 +535,50 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
       plot_df <- M
       fig_path <- c(paste(export_dir,unique(Metrics$Metric)[i],'.png',sep = ""))
       y_lbl <- paste(M$Metric[1],' (',M$Units[1],')',sep = "")
-      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=NULL, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE,  plot_by_select_experiment=select_exps)}
+      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=NULL, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE,  plot_by_select_experiment=FALSE)}
     rm(PowGenHydroGW,PowGenRenewGW,PowGenRenewIntGW,PowGenHydro)
+  }
+  
+  qry <- "elec gen by gen tech.proj"
+  prj_path <- paste0(base_dir, qry)
+  prj <- loadProject(prj_path)
+  if(qry=="elec gen by gen tech.proj"){
+    
+    total_RPS <- prj$data$`elec gen by gen tech` %>%
+      filter(technology != "hydrogen cogen") %>%
+      filter(technology != "rooftop_pv") %>%
+      filter(technology != "hydro") %>%
+      filter(technology != "wind_offshore") %>%
+      group_by(scenario, region, year, experiment, old_scen_name) %>%
+      summarise(total_value = sum(value))
+    
+    ren_RPS <- prj$data$`elec gen by gen tech` %>%
+      filter(technology %in% c("PV", "PV_storage", "wind", "wind_storage",
+                               "biomass (IGCC CCS)", "biomass (IGCC)", "biomass (conv CCS)", "biomass (conv)")) %>%
+      group_by(scenario, region, year, experiment, old_scen_name) %>%
+      summarise(ren_value = sum(value))
+    
+    RPS_pct <- ren_RPS %>%
+      left_join(total_RPS) %>%
+      mutate(pct = ren_value / total_value)
+    
+    total_RPS <- prj$data$`elec gen by gen tech` %>%
+      filter(technology != "hydrogen cogen") %>%
+      filter(technology != "rooftop_pv") %>%
+      filter(technology != "hydro") %>%
+      group_by(scenario, region, year, experiment, old_scen_name) %>%
+      summarise(total_value = sum(value))
+    
+    ren_RPS <- prj$data$`elec gen by gen tech` %>%
+      filter(technology %in% c("PV", "PV_storage", "wind", "wind_storage", "wind_offshore",
+                               "biomass (IGCC CCS)", "biomass (IGCC)", "biomass (conv CCS)", "biomass (conv)")) %>%
+      group_by(scenario, region, year, experiment, old_scen_name) %>%
+      summarise(ren_value = sum(value))
+    
+    RPS_pct <- ren_RPS %>%
+      left_join(total_RPS) %>%
+      mutate(pct = ren_value / total_value)
+      
   }
   
   qry <- "elec prices by sector.proj"
@@ -578,10 +621,10 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
       group_by(scenario, region, experiment, old_scen_name, year)%>%
       summarize(value=sum(value)*(4.52/0.2777))%>%mutate(Metric="Marginal Cost of Electicity",Units="2015$/MWh")#4.52*1975$=2015$ ##1GJ=0.2777MWh ##With carbon price
     
-    select_exps <- c('42', '58', '46', '62')
+    #select_exps <- c('42', '58', '46', '62')
     fig_path <- c(paste(export_dir,electricity3$Metric[1],'.png',sep = ""))
     y_lbl <- paste(electricity3$Metric[1],' (',electricity3$Units[1],')',sep = "")
-    line_plot(electricity3, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE,  plot_by_select_experiment=select_exps)
+    line_plot(electricity3, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE,  plot_by_select_experiment=FALSE)
     
     Metrics<-rbind(as_tibble(electricity3))
     
@@ -591,7 +634,7 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
       plot_df <- M
       fig_path <- c(paste(export_dir,unique(Metrics$Metric)[i],'.png',sep = ""))
       y_lbl <- paste(M$Metric[1],' (',M$Units[1],')',sep = "")
-      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=NULL, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE,  plot_by_select_experiment=select_exps)}
+      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=NULL, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE,  plot_by_select_experiment=FALSE)}
     rm(PowGenHydroGW,PowGenRenewGW,PowGenRenewIntGW,PowGenHydro)
     
   }
@@ -756,7 +799,7 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
   if(qry=="transport final energy by mode and fuel.proj"){
     
     #####US$ per liter
-    costpollutant <- read.csv('D:/RDM/Colombia-RDM-Analysis-master/metrics/Cost of local pollutants.csv') %>%
+    costpollutant <- read.csv('D:/RDM/IDB_RDM_Colombia/metrics/Cost of local pollutants.csv') %>%
     ## BY 12-18-2020
       gather(key = "input", value = "value", c("gasoline", "diesel", "Kerosene", "gas", "coal"))
    ## costpollutant<-melt(costpollutant, id.vars=c("year","units"))%>%mutate(input=variable,variable=NULL)
@@ -890,7 +933,7 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
       plot_df <- M
       fig_path <- c(paste(export_dir,unique(Metrics$Metric)[i],'.png',sep = ""))
       y_lbl <- paste(M$Metric[1],' (',M$Units[1],')',sep = "")
-      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=NULL, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE, plot_by_select_experiment=select_exps)}
+      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=NULL, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE, plot_by_select_experiment=FALSE)}
     rm(TotVKT,Evehicles)  
   }
   
@@ -1046,7 +1089,7 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
       plot_df <- M
       fig_path <- c(paste(export_dir,unique(Metrics$Metric)[i],'.png',sep = ""))
       y_lbl <- paste(M$Metric[1],' (',M$Units[1],')',sep = "")
-      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE, plot_by_select_experiment=select_exps)}
+      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE, plot_by_select_experiment=FALSE)}
     
     rm(traindemand,cycledemand,airdemand,walkdemand,cardemand,passdemand)
   }
@@ -1172,7 +1215,7 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
       plot_df <- M
       fig_path <- c(paste(export_dir,unique(Metrics$Metric)[i],'.png',sep = ""))
       y_lbl <- paste(M$Metric[1],' (',M$Units[1],')',sep = "")
-      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE,  plot_by_select_experiment=select_exps)}
+      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE,  plot_by_select_experiment=FALSE)}
     rm(all,oilp,gasp,coalp,renewablesp,biomassp,hydrop,tradbiop,nuclearp)  
   }
   
@@ -1204,13 +1247,13 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
     
     Metrics<-rbind(as_tibble(totalPcost1))
     
-    select_exps <- c("42", "58", "43", "59", "46", "62", "47", "63")
+   # select_exps <- c("42", "58", "43", "59", "46", "62", "47", "63")
     for (i in seq(length(unique(Metrics$Metric)))) {
       M<-Metrics%>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
       plot_df <- M
       fig_path <- c(paste(export_dir,unique(Metrics$Metric)[i],'.png',sep = ""))
       y_lbl <- paste(M$Metric[1],' (',M$Units[1],')',sep = "")
-      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE,  plot_by_select_experiment=select_exps)}
+      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE,  plot_by_select_experiment=FALSE)}
     rm(nuc,bio,c,ngas,roil,price2015,totalPcost,totalPcost1) 
   }
   
@@ -1228,13 +1271,13 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
     bioliquid1$value<-(bioliquid1$value/refliquid$value)*100
     Metrics<-rbind(as_tibble(bioliquid),as_tibble(bioliquid1))
     
-    select_exps <- c("42", "58", "43", "59", "46", "62", "47", "63")
+ #   select_exps <- c("42", "58", "43", "59", "46", "62", "47", "63")
     for (i in seq(length(unique(Metrics$Metric)))) {
       M<-Metrics%>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
       plot_df <- M
       fig_path <- c(paste(export_dir,unique(Metrics$Metric)[i],'.png',sep = ""))
       y_lbl <- paste(M$Metric[1],' (',M$Units[1],')',sep = "")
-      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE,  plot_by_select_experiment=select_exps)}
+      line_plot(plot_df, fig_path, plot_scens, y_lbl=y_lbl, x_lbl=x_lbl, title=title, x_min=x_min, x_max=x_max, legend_on=FALSE, gray_ribbon = TRUE,  plot_by_select_experiment=FALSE)}
     
   }
   
@@ -1411,7 +1454,7 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
   library('metis')
   library(data.table)
   # Source plotting function
-  source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
+  source('D:/RDM/IDB_RDM_Colombia/metrics/RDM_plotting.R')
   
   # Create dataFrame that will store all uncertainty results to be plotted
   plot_df <- data.frame(scenario = character(), experiment = integer(), region = character(), param = character(),
@@ -1470,7 +1513,7 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
   ymax_list <- list("elecCumCapGW" = NULL, "elecNewCapGW" = NULL, "elecCumCapCost" = NULL, "elecNewCapCost" = NULL,
                     "elecAnnualRetPrematureGW" = 1, "elecCumRetPrematureGW" = 1,
                     "elecAnnualRetPrematureCost" = 1, "elecCumRetPrematureCost" = 1)
-  select_exps <- c('42', '58', '46', '62')
+ # select_exps <- c('42', '58', '46', '62')
   plot_scens <- c('DDPXL')  # c('DelayedEndPt', 'DDP', 'DelayedCumEmiss') # c("ColPol", "DDP")
   plot_XLfacs <- c('InvalidEntry')
   for(paramSelect in params){
@@ -1481,6 +1524,6 @@ source('D:/RDM/Colombia-RDM-Analysis-master/metrics/RDM_plotting.R')
     y_lbl <- unique(plot_df_sub$Units)[1]
     line_plot(plot_df_sub, fig_path, plot_scens, plot_XLfacs, y_lbl=y_lbl, x_min=x_min, x_max=x_max,
               y_min = ymin_list[[paramSelect]], y_max = ymax_list[[paramSelect]], plot_by_scen=FALSE, plot_by_XLfac=FALSE,
-              title=title, plot_by_select_experiment=select_exps, gray_ribbon=TRUE)
+              title=title, plot_by_select_experiment=FALSE, gray_ribbon=TRUE)
   }
   
