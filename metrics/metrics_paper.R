@@ -273,12 +273,16 @@ ValueCropProd <- CropProdType %>%
   mutate(value = if_else(output != "biomass", 
                          value.Prod * value.Price * 10^9 * 4.25,
                          value.Prod * value.Price * 10^6 * 4.25)) %>%
+  group_by(scenario, experiment, old_scen_name, year) %>%
+  # add up the value of crops together
+  dplyr::summarise(value = sum(value)) %>%
   mutate(Units = "2015$",
          region = "colombia",
          Metric = "Value of Crop Production") %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
   
-
+#TO-DO: biomass exports
+#T0-D0: crop exports
   
 Metrics <- rbind(as_tibble(UnmanagedLand),
                  as_tibble(CropLand),
