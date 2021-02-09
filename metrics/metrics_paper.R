@@ -27,7 +27,7 @@ library(metis)
 # Set directories, load extra files ---------------------------------------
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 metrics_folder <- getwd()
-run_name <- 'runs_512_01_14_2021' # only need to change this to the run folder name
+run_name <- 'runs_512_02_08_2021' # only need to change this to the run folder name
 setwd(paste('..', run_name, sep = '/'))
 
 base_dir <- paste(getwd(), 'query_proj/', sep = '/')
@@ -347,13 +347,11 @@ biomass_elec_ratio <- ElecGenTech %>%
 
 
 ### Biofuel proportion of gas production
-
-## !!!!!We dont have gas production by tech.proj yet!! Do Not Run!!!
 qry <- "gas production by tech.proj"
 prj_path <- paste0(base_dir, qry)
 prj <- loadProject(prj_path)
 
-GasProTech <- prj$data$`gas production by tech.proj`
+GasProTech <- prj$data$`gas production by tech`
 
 TotalGasProTech <- GasProTech %>% 
   group_by(scenario, region, Units, experiment, old_scen_name, year) %>% 
@@ -405,7 +403,6 @@ BioTransFinal_gas <- TransFinal %>%
   
 
 ### Biofuels as a proportion of transportation energy consumption (%)
-## NOTE!! This cannot be run yet because we dont have gas query.
 BiomassTrans <- Reduce(function(...)
   left_join(..., by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year')),
   list(BioTransFinal_liq, BioTransFinal_elec, BioTransFinal_gas, TotalTransFinal)) %>% 
@@ -464,20 +461,60 @@ ValueCropProd <- CropProdType %>%
          Metric = "Value of Crop Production") %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
   
-# TO-DO: biomass exports
-# T0-D0: crop exports
+## Crop Exports
+qry <- "Crop exports.proj"
+prj_path <- paste0(base_dir, qry)
+prj <- loadProject(prj_path)
+
+CropExports <- prj$data$`Crop exports`
+
+### Crop Exports Value in $
+ValueCropExports <- CropExports %>% 
+  mutate(subsector = gsub('Colombia traded ', '', subsector)) %>% 
+  filter(subsector %in% c("corn", "fiberCrop", "Wheat",
+                       "sugarCrop", "rice", "othergrain",
+                       "oilCrop", "miscCrop", "palmfruit", "biomass")) %>%
+  left_join(CropPrices, by = c("scenario", "input" = "market", "year", "experiment", "old_scen_name"),
+            suffix = c(".Exports", ".Price")) %>% 
+  # value of crop exports = sum of (crop exports X price of crop)
+  # non-biomass crops: Mt * 1975$/kg * 10^9 * 4.25 2015$/1975$ = 2015$
+  # biomass crops: EJ * 1975$/GJ * 10^9 * 4.25 2015$/1975$ = 2015$
+  mutate(value = if_else(input != "biomass", 
+                         value.Exports * value.Price * 10^9 * 4.25,
+                         value.Exports * value.Price * 10^9 * 4.25)) %>%
+  group_by(scenario, experiment, old_scen_name, year) %>%
+  # add up the value of crops together
+  dplyr::summarise(value = sum(value)) %>%
+  mutate(Units = "2015$",
+         region = "colombia",
+         Metric = "Value of Crop Exports") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
+
+
+### Biomass Exports in EJ
+BiomassExports <- CropExports %>% 
+  filter(sector %in% c('traded biomass') & subsector %in% 'Colombia traded biomass') %>% 
+  mutate(Metric = 'Biomass Exports') %>% 
+  select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
+  
   
 Metrics <- rbind(as_tibble(UnmanagedLand),
                  as_tibble(CropLand),
                  as_tibble(biomass),
                  as_tibble(biomassp),
-                 as_tibble(ValueCropProd))
+                 as_tibble(ValueCropProd),
+                 as_tibble(ValueCropExports),
+                 as_tibble(BiomassExports),
+                 as_tibble(BiomassTrans))
 
 rdm_cart(UnmanagedLand)
 rdm_cart(CropLand)
 rdm_cart(biomass)
 rdm_cart(biomassp)
 rdm_cart(ValueCropProd)
+rdm_cart(ValueCropExports)
+rdm_cart(BiomassExports)
+rdm_cart(BiomassTrans)
 
 if(!file.exists(paste0(export_dir, '3-Crop&Biomass/'))){
   dir.create(paste0(export_dir, '3-Crop&Biomass/'))
@@ -529,7 +566,7 @@ dataProj_i <- prj_path  # Use if gcamdata has been saved as .proj file
 RDM_results_for_Metis <- loadProject(dataProj_i)
 scenOrigNames_i <- listScenarios(RDM_results_for_Metis)
 regionsSelect_i <- c("Colombia")
-dataGCAM <- metis.readgcam(reReadData = F,  # F
+dataGCAM <- metis.readgcam(reReadData = F,  # TRUE create a .proj file
                            scenOrigNames = scenOrigNames_i,
                            dataProj = dataProj_i,
                            regionsSelect = regionsSelect_i,
@@ -560,8 +597,8 @@ plot_df <- plot_df %>%
 params <- c("elecCumCapGW", "elecNewCapGW", "elecCumCapCost", "elecNewCapCost", "elecAnnualRetPrematureGW",
             "elecCumRetPrematureGW", "elecAnnualRetPrematureCost", "elecCumRetPrematureCost")
 ymin_list <- list("elecCumCapGW" = NULL, "elecNewCapGW" = NULL, "elecCumCapCost" = NULL, "elecNewCapCost" = NULL,
-                  "elecAnnualRetPrematureGW" = -5, "elecCumRetPrematureGW" = -6, # was "elecCumRetPrematureGW" = -5,
-                  "elecAnnualRetPrematureCost" = -5, "elecCumRetPrematureCost" = -15) # was "elecCumRetPrematureCost" = -10
+                  "elecAnnualRetPrematureGW" = -6, "elecCumRetPrematureGW" = -15, # was "elecCumRetPrematureGW" = -5,
+                  "elecAnnualRetPrematureCost" = -5, "elecCumRetPrematureCost" = -20) # was "elecCumRetPrematureCost" = -10
 ymax_list <- list("elecCumCapGW" = NULL, "elecNewCapGW" = NULL, "elecCumCapCost" = NULL, "elecNewCapCost" = NULL,
                   "elecAnnualRetPrematureGW" = 1, "elecCumRetPrematureGW" = 1,
                   "elecAnnualRetPrematureCost" = 1, "elecCumRetPrematureCost" = 1)
@@ -684,7 +721,6 @@ BioFinalEne_biomass <- FinalEneFuel %>%
 
 
 ### Calculate the biofuels as a proportion of transportation energy consumption (%)
-## NOTE!! This cannot be run yet because we dont have gas query.
 BiomassFinalEne <- Reduce(function(...)
   left_join(..., by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year')),
   list(BioFinalEne_liq, BioFinalEne_elec, BioFinalEne_gas, BioFinalEne_biomass, TotalFinalEneFuel)) %>% 
