@@ -94,28 +94,6 @@ PowGenHydro <- PowGenHydroGW %>%
   mutate(value = value.hydro/value.total * 100, Metric = "Hydro Percentage", Units = "%") %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
 
-qry <- "elec gen by gen tech.proj"
-prj_path <- paste0(base_dir, qry)
-prj <- loadProject(prj_path)
-
-## RPS Calculations
-total_RPS <- prj$data$`elec gen by gen tech` %>%
-  filter(technology != "hydrogen cogen") %>%
-  filter(technology != "rooftop_pv") %>%
-  group_by(scenario, region, year, experiment, old_scen_name) %>%
-  summarise(total_value = sum(value))
-
-ren_RPS <- prj$data$`elec gen by gen tech` %>%
-  filter(technology %in% c("PV", "PV_storage", "wind", "wind_storage", "wind_offshore", "hydro",
-                           "biomass (IGCC CCS)", "biomass (IGCC)", "biomass (conv CCS)", "biomass (conv)")) %>%
-  group_by(scenario, region, year, experiment, old_scen_name) %>%
-  summarise(ren_value = sum(value))
-
-RPS_pct <- ren_RPS %>%
-  left_join(total_RPS) %>%
-  mutate(pct = ren_value / total_value)
-
-
 ## ------------------------------- NEW 1 -------------------------------
 ## Negative CO2 Emissions
 qry <- "CO2 emissions by sector.proj"
