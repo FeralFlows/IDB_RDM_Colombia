@@ -1,6 +1,12 @@
 library('dplyr')
 library(gcamdata)
 
+scenario_name <- "Colombia_RPS_Low_v2"
+base_directory <- 'D:/RDM/IDB_RDM_Colombia/colombia_policy/RPS/policy_files/'
+pre_specified_adj.coef <- readr::read_csv('D:/RDM/IDB_RDM_Colombia/colombia_policy/RPS/policy_files/RPS_Low_v2_pre_specified_adj_coef.csv')
+
+rps_csv_xml(scenario_name, base_directory)
+
 rps_csv_xml <- function(scenario_name, base_directory, rule='linear', pre_specified_adj.coef=NULL){
   # This script creates three .csv files that ultimately need to be combined into a single file and then run through
   # the GCAM model interface to create a XML file. Need to figure out if these xml files can actually be kept separate,
@@ -15,7 +21,8 @@ rps_csv_xml <- function(scenario_name, base_directory, rule='linear', pre_specif
   supplysectors <- c('electricity')
   years <- c(c(1975, 1990), seq(2005, 2100, 5))
   # 'hydro' = c('hydro')
-  subsectors_NoCool <- list('wind' = c('wind', 'wind_storage'), 'solar' = c('PV', 'PV_storage'))
+  subsectors_NoCool <- list('wind' = c('wind', 'wind_storage', 'wind_offshore'), 'solar' = c('PV', 'PV_storage'),
+                            'hydro' = c('hydro'))
   
   subsectors_Cool <- list('coal' = c('coal (conv pul CCS)', 'coal (conv pul)', 'coal (IGCC)', 'coal (IGCC CCS)'), 
                      'gas' = c('gas (steam/CT)', 'gas (CC)', 'gas (CC CCS)'), 
@@ -46,13 +53,15 @@ rps_csv_xml <- function(scenario_name, base_directory, rule='linear', pre_specif
                                   'CSP_storage' = c('CSP_storage (dry_hybrid)', 'CSP_storage (recirculating)'),
                                   'wind' = c('wind'), 
                                   'wind_storage' = c('wind_storage'),
+                                  'wind_offshore' = c('wind_offshore'),
                                   'PV' = c('PV'), 
-                                  'PV_storage' = c('PV_storage')
-                                  )
+                                  'PV_storage' = c('PV_storage'),
+                                  'hydro' = c('hydro')
+  )
   
-  renewables_NoCool <- c('wind', 'solar')
+  renewables_NoCool <- c('wind', 'solar', 'hydro')
   subsectors_renewables_NoCool <- subsectors_NoCool[renewables_NoCool]
-  renewables_Cool <- c('geothermal', 'biomass')
+  renewables_Cool <- c('geothermal', 'biomass', 'solar')
   subsectors_renewables_Cool <- subsectors_Cool[renewables_Cool]
   
   SecondaryOutput_NoCool <- data.frame("region" = character(), 'supplysector' = character(), 'subsector' = character(), 
@@ -196,8 +205,11 @@ rps_csv_xml <- function(scenario_name, base_directory, rule='linear', pre_specif
   period_years_part_2 <- seq(2005, 2100, 5)
   period_years <- c(period_years_part_1, period_years_part_2)
   rule <- 'prespecify'
-  level_2020 <- 0.05  # renewables fraction NOT including hydro
-  level_2050 <- 0.3  # renewables fraction NOT including hydro
+# level_2020 <- 0.05  # renewables fraction NOT including hydro
+# level_2050 <- 0.3  # renewables fraction NOT including hydro
+  
+  level_2020 <- 0.65  # renewables fraction including hydro
+  level_2050 <- 0.85  # renewables fraction including hydro
   for(region in regions) {
     for(supplysector in supplysectors) {
       for (subsector in names(subsectors_NoCool)) {
@@ -285,8 +297,11 @@ rps_csv_xml <- function(scenario_name, base_directory, rule='linear', pre_specif
   period_years_part_1 <- c(1975, 1990)
   period_years_part_2 <- seq(2005, 2100, 5)
   period_years <- c(period_years_part_1, period_years_part_2)
-  level_2020 <- 0.05  # renewables fraction NOT including hydro
-  level_2050 <- 0.3  # renewables fraction NOT including hydro
+  # level_2020 <- 0.05  # renewables fraction NOT including hydro
+  # level_2050 <- 0.3  # renewables fraction NOT including hydro
+  
+  level_2020 <- 0.65  # renewables fraction including hydro
+  level_2050 <- 0.85  # renewables fraction including hydro
   for(region in regions) {
     for(supplysector in supplysectors) {
       for (subsector in names(subsectors_Cool)) {
@@ -416,7 +431,7 @@ rps_csv_xml <- function(scenario_name, base_directory, rule='linear', pre_specif
   if(file.exists(xmlpath)){
     file.remove(xmlpath)
   }
-  mi_header <- 'C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/colombia_policy/headers_rdm.txt'
+  mi_header <- 'D:/RDM/IDB_RDM_Colombia/colombia_policy/headers_rdm.txt'
   gcamdata::create_xml(xmlpath, mi_header = mi_header) %>%
     gcamdata::add_xml_data(tibble::as.tibble(SecondaryOutput_NoCool), 'SecondaryOutput_NoCool', NULL) %>%
     gcamdata::add_xml_data(tibble::as.tibble(SecondaryOutput_Cool), 'SecondaryOutput_Cool', NULL) %>%
