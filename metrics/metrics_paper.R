@@ -54,7 +54,7 @@ source(paste(metrics_folder, 'RDM_plotting_distribution.R', sep = '/'))
 source(paste(metrics_folder, 'RDM_CART_fns.R', sep = '/'))
 
 
-# 1. Intermittent Renewables ----------------------------------------------
+#  Intermittent Renewables ----------------------------------------------
 qry <- "Electricity generation by aggregate technology.proj"
 prj_path <- paste0(base_dir, qry)
 prj <- loadProject(prj_path)
@@ -116,11 +116,12 @@ RPS_pct <- ren_RPS %>%
   mutate(pct = ren_value / total_value)
 
 
-## ------------------------------- NEW 1 -------------------------------
-## Negative CO2 Emissions
+
+# GHG Emissions --------------------------------------------------
 qry <- "CO2 emissions by sector.proj"
 prj_path <- paste0(base_dir, qry)
 prj <- loadProject(prj_path)
+
 
 CO2Sector <- prj$data$`CO2 emissions by sector`
 
@@ -130,8 +131,6 @@ NegativeCO2 <- CO2Sector %>%
   dplyr::summarise(value = sum(value) * 44/12) %>%
   mutate(Metric = 'Negative CO2 Emission',
          Units = 'MTCO2')
-
-## ------------------------------- END NEW 1 -------------------------------
 
 
 Metrics <- rbind(as_tibble(PowGenRenewInt),
@@ -172,8 +171,6 @@ for(i in seq(length(unique(Metrics$Metric)))){
   }
 
 
-## GHG emissions -----------------------------------------------------------
-
 qry <- "nonCO2 emissions by resource production.proj"
 prj_path <- paste0(base_dir, qry)
 prj <- loadProject(prj_path)
@@ -204,8 +201,90 @@ NonCO2_total_MTCO2e <- NonCO2_species_MTCO2e %>%
   dplyr::summarise(value = sum(value)) %>%
   mutate(Metric = "Nonco2 Emissions")
 
+# LUC emissions
+qry <- "Land Use Change Emission (future).proj"
+prj_path <- paste0(base_dir, qry)
+prj <- loadProject(prj_path)
 
-# 2. Air Pollution --------------------------------------------------------
+LUC_emissions <- prj$data$`Land Use Change Emission (future)` %>%
+  mutate(Units = "MtCO2e/yr", value = value * 44/12) %>%
+  group_by(scenario, region, experiment, old_scen_name, Units, year) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  mutate(Metric = "LUC Emissions")
+
+Metrics <- rbind(LUC_emissions) 
+
+rdm_cart(LUC_emissions)
+
+if(!file.exists(paste0(export_dir, 'LUC_Emissions'))){
+  dir.create(paste0(export_dir, 'LUC_Emissions/'))
+}
+select_exps <- c('0', '16', '32', '48', '64', '80', '96', '112',
+                 '128', '144', '160', '176', '192', '208', '224', '240')
+for(i in seq(length(unique(Metrics$Metric)))){
+  M <- Metrics %>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
+  plot_df <- M
+  fig_path <- c(paste(export_dir, 'LUC_Emissions/', unique(Metrics$Metric)[i], '.png', sep = ""))
+  y_lbl <- paste(M$Metric[1], ' (', M$Units[1], ')', sep = "")
+  line_plot(
+    plot_df,
+    fig_path,
+    plot_scens,
+    y_lbl = y_lbl,
+    x_lbl = x_lbl,
+    title = NULL,
+    x_min = x_min,
+    x_max = x_max,
+    legend_on = FALSE,
+    gray_ribbon = TRUE,
+    distribution = TRUE,
+    plot_by_select_experiment = select_exps)
+}
+
+
+select_exps <- c('0', '16', '32', '48', '64', '80', '96', '112',
+                 '128', '144', '160', '176', '192', '208', '224', '240')
+
+LUC_emissions_filtered <- LUC_emissions %>%
+  filter(experiment %in% select_exps)
+
+LUC_emissions_filtered$experiment <- factor(LUC_emissions_filtered$experiment,
+                                            levels = c('0', '16', '32', '48', '64', '80', '96', '112',
+                                                       '128', '144', '160', '176', '192', '208', '224', '240'))
+                                            
+
+fig_path <- c(paste(export_dir, 'LUC_Emissions/', "LUC_Emissions_select", '.png', sep = ""))
+
+plot <- LUC_emissions_filtered %>%
+  filter(year >= 2015 & year <= 2050) %>%
+  ggplot(aes(x = year, y = value)) +
+  geom_line(size = 1, aes( color = experiment)) +
+  # coord_cartesian(ylim = c(-8E9, 8E9))+
+  scale_color_manual(values = c('darkred', 'darkred','darkred', 'darkred','darkred', 'darkred','darkred', 'darkred',
+                                'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen'))+
+  labs(y = "LUC Emissions (MTCO2e/yr)") +
+  theme_bw() +
+  theme(text = element_text(size = 12), axis.text.x = element_text(angle = 90, hjust = 1))+
+  theme(
+    text =                element_text(family = NULL, face = "plain",colour = "black", size = 8 ,hjust = 0.5,
+                                       vjust = 0.5, angle = 0, lineheight = 0.9)
+    ,axis.text.x =        element_text(size=8)
+    ,axis.text.y =        element_text(size=8)
+    # ,axis.title.x =       element_text(vjust = -1, margin=margin(t=1,unit="line"))
+    ,axis.title.x =       element_blank()
+    ,axis.title.y =       element_text(angle = 90, vjust = 2, margin=margin(r=1,unit="line"))
+    ,legend.key =         element_blank()
+    ,legend.key.size =    unit(1.0, 'lines')
+    ,legend.text =        element_text(size = 6, colour = "black")
+    ,legend.title =       element_text(size = rel(1), face = NULL, hjust = 0, colour = "black")
+    ,strip.background =   element_rect(fill = NA, colour = "black")
+    ,plot.margin =        unit(c(0.2, 0.2, 0.2, 0.2), "lines")
+    # ,plot.title=          element_text(face="bold", hjust=0.2, vjust = -1, margin = margin(b=20), size=8)
+    ,plot.title=          element_blank()
+    ,legend.position =    c('right')  # c(0.95, 0.95)
+  )+
+  ggsave(fig_path, height = 3.4, width = 4, units = "in")
+# Air Pollution --------------------------------------------------------
 
 ## NOx
 NOx <- NonCO2_species %>%
@@ -272,7 +351,7 @@ for(i in seq(length(unique(Metrics$Metric)))){
   }
 
 
-# 3. Crops & Biomass -----------------------------------------------------
+# Crops & Biomass -----------------------------------------------------
 
 qry <- "aggregated land allocation.proj"
 prj_path <- paste0(base_dir, qry)
@@ -326,7 +405,6 @@ biomassp <- biomass %>%
          Units = "%") %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
 
-## ------------------------------- NEW 2 -------------------------------
 ## Biomass Share of Transport Final Energy
 
 ### Biofuel proportion of refined liquids production
@@ -436,8 +514,6 @@ BiomassTrans <- Reduce(function(...)
          Metric = 'Biofuels Share of Transportation Energy',
          Units = '%') %>% 
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
-
-## ------------------------------- END NEW 2 -------------------------------
 
 
 ## Value of Crop Production
@@ -564,7 +640,7 @@ for(i in seq(length(unique(Metrics$Metric)))){
   }
 
 
-# 4. Electricity Investments ----------------------------------------------
+# Electricity Investments ----------------------------------------------
 
 # Create dataFrame that will store all uncertainty results to be plotted
 plot_df <- data.frame(scenario = character(), experiment = integer(), region = character(), param = character(),
@@ -665,7 +741,7 @@ for(paramSelect in params){
 
 
 
-# 5. Electrification and Alternative Fuels --------------------------------
+# Electrification and Alternative Fuels --------------------------------
 
 qry <- "final energy consumption by sector and fuel.proj"
 prj_path <- paste0(base_dir, qry)
@@ -705,7 +781,6 @@ HydrogenPctFinalEneFuel <- HydrogenFinalEneFuel %>%
          Metric = "Hydrogen Share of Final Energy") %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
 
-## ----------------------------------- NEW 3 -----------------------------------
 ## Bioenergy percentage of final energy
 ## Biomass Final Energy in the form of Liquids, Electricity, Gas, and Biomass
 
@@ -756,7 +831,6 @@ BiomassFinalEne <- Reduce(function(...)
          Units = '%') %>% 
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
 
-##------------------------------- END NEW 3 ------------------------------------
 
 Metrics <- rbind(as_tibble(ElecPctFinalEneFuel),
                  as_tibble(HydrogenPctFinalEneFuel),
@@ -792,7 +866,7 @@ for(i in seq(length(unique(Metrics$Metric)))){
   }
 
 
-# 6. Global Oil & Gas Price -----------------------------------------------
+# Global Oil & Gas Price -----------------------------------------------
 
 ## Global oil price
 oilprice2020 <- PriceAllMarkets %>%
@@ -850,7 +924,6 @@ gasp <- gas %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
 
 
-##---------------------------------- NEW 4 ------------------------------------
 ## Global oil consumption
 ## Global natural gas 
 qry <- "demand of all markets.proj"
@@ -867,8 +940,6 @@ GlobalNG <- DemandAllMarkets %>%
   filter(market %in% 'globalnatural gas') %>% 
   mutate(Metric = 'Global Natural Gas Consumption') %>% 
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
-
-##------------------------------- END NEW 4 ------------------------------------
 
 Metrics <- rbind(as_tibble(oilprice),
                  as_tibble(ngprice),
@@ -907,4 +978,313 @@ for(i in seq(length(unique(Metrics$Metric)))){
     plot_by_select_experiment = FALSE,
     distribution = TRUE
   )
-  }
+}
+
+
+# Transportation externality costs ----------------------------------------------------
+
+qry <- "transport final energy by mode and fuel.proj"
+prj_path <- paste0(base_dir, qry)
+prj <- loadProject(prj_path)
+
+TrnFinalEneModeFuel <- prj$data$`transport final energy by mode and fuel`
+
+qry <- "transport service output by tech.proj"
+prj_path <- paste0(base_dir, qry)
+prj <- loadProject(prj_path)
+
+TrnServTech <- prj$data$`transport service output by tech`
+
+#Get fuel use in 2015 for gasoline and diesel vehicles
+#Passenger vehicles
+GasolinePass_2015 <- TrnFinalEneModeFuel %>%
+  filter(year == 2015,
+         mode %in% c("2W and 3W", "Car", "Mini Car", "Large Car and Truck"),
+         input == "refined liquids enduse") %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value))
+
+DieselPass_2015 <- TrnFinalEneModeFuel %>%
+  filter(year == 2015,
+         mode %in% c("Bus"), 
+         input == "refined liquids enduse") %>%
+  group_by(scenario, region, experiment, old_scen_name, year,  Units) %>%
+  dplyr::summarise(value = sum(value))
+
+#Freight vehicles
+Freight_2015 <- TrnFinalEneModeFuel %>%
+  filter(year ==  2015,
+         sector == "trn_freight_road",
+         input == "refined liquids enduse") %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value))
+
+
+#Get refined liquids service demand in 2015
+PassRoad_Liquid_2015 <- TrnServTech %>%
+  filter(year == 2015,
+         technology == "Liquids",
+         subsector %in% c("2W and 3W", "Car", "Mini Car", "Large Car and Truck", "Bus")) %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value))
+
+FreightRoad_Liquid_2015 <- TrnServTech %>%
+  filter(year == 2015,
+         technology == "Liquids",
+         sector == "trn_freight_road") %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value))
+
+
+#Get all service demand, across years
+PassRoad <- TrnServTech %>%
+  filter(subsector %in% c("2W and 3W", "Car", "Mini Car", "Large Car and Truck", "Bus")) %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value))
+
+FreightRoad <- TrnServTech %>%
+  filter(sector == "trn_freight_road") %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value))
+
+# Calculate externality costs:
+# Fuel use [EJ] * IMF costs [$/L] * [L/MJ] * 10^12 MJ/EJ 
+
+#Congestion
+CongestionGasolinePass_2015 <- GasolinePass_2015 %>%
+  mutate(value = value * 0.12 * 0.03 * 10^12,
+         Units = "2015$")
+
+CongestionDieselPass_2015 <- DieselPass_2015 %>%
+  mutate(value = value * 0.10 * 0.026 * 10^12,
+         Units = "2015$")
+
+#add diesel and gasoline costs together
+#divide by service demand in 2015 to obtain normalized cost
+CongestionPass_2015 <- bind_rows(CongestionDieselPass_2015,
+                            CongestionGasolinePass_2015) %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  left_join(PassRoad_Liquid_2015, by = c("scenario", "region", "experiment", "old_scen_name", "year"),
+            suffix = c(".USD", ".mill_pass_km")) %>%
+  mutate(value = value.USD/value.mill_pass_km,
+         Units = "2015$/mill_pass_km") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Units)
+
+#multiply normalized cost by service demand across years
+CongestionPass <- PassRoad %>%
+  filter(year >= 2015 & year <= 2050) %>%
+  left_join(CongestionPass_2015, by = c("scenario", "region", "experiment", "old_scen_name"),
+          suffix = c(".mill_pass_km", ".2015USD_mill_pass_km")) %>%
+  mutate(value = value.mill_pass_km * value.2015USD_mill_pass_km,
+         year = year.mill_pass_km,
+         Units = "2015$")%>%
+  select(scenario, region, experiment, old_scen_name, year, value, Units)
+
+#divide by service demand in 2015 to obtain normalized cost
+CongestionFreight_2015 <- Freight_2015 %>%
+  mutate(value = value * 0.10 * 0.026 * 10^12,
+         Units = "2015$") %>%
+  left_join(FreightRoad_Liquid_2015, by = c("scenario", "region", "experiment", "old_scen_name", "year"),
+                                   suffix = c(".USD", ".mill_ton_km")) %>%
+  mutate(value = value.USD/value.mill_ton_km,
+         Units = "2015$/mill_ton_km") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Units)
+
+#multiply normalized cost by service demand across years
+CongestionFreight <- FreightRoad %>%
+  filter(year >= 2015 & year <= 2050) %>%
+  left_join(CongestionFreight_2015, by = c("scenario", "region", "experiment", "old_scen_name"),
+            suffix = c(".mill_ton_km", ".2015USD_mill_ton_km")) %>%
+  mutate(value = value.mill_ton_km * value.2015USD_mill_ton_km,
+         year = year.mill_ton_km,
+         Units = "2015$")%>%
+  select(scenario, region, experiment, old_scen_name, year, value, Units)
+
+#Accidents
+AccidentGasolinePass_2015 <- GasolinePass_2015 %>%
+  mutate(value = value * 0.19 * 0.03 * 10^12,
+         Units = "2015$")
+  
+AccidentDieselPass_2015 <- DieselPass_2015 %>%
+  mutate(value = value * 0.09 * 0.026 * 10^12,
+         Units = "2015$")
+
+#add diesel and gasoline costs together
+#divide by service demand in 2015 to obtain normalized cost
+AccidentPass_2015 <- bind_rows(AccidentDieselPass_2015,
+                                 AccidentGasolinePass_2015) %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  left_join(PassRoad_Liquid_2015, by = c("scenario", "region", "experiment", "old_scen_name", "year"),
+            suffix = c(".USD", ".mill_pass_km")) %>%
+  mutate(value = value.USD/value.mill_pass_km,
+         Units = "2015$/mill_pass_km") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Units)
+
+#multiply normalized cost by service demand across years
+AccidentPass <- PassRoad %>%
+  filter(year >= 2015 & year <= 2050) %>%
+  left_join(AccidentPass_2015, by = c("scenario", "region", "experiment", "old_scen_name"),
+            suffix = c(".mill_pass_km", ".2015USD_mill_pass_km")) %>%
+  mutate(value = value.mill_pass_km * value.2015USD_mill_pass_km,
+         year = year.mill_pass_km,
+         Units = "2015$")%>%
+  select(scenario, region, experiment, old_scen_name, year, value, Units)
+
+#divide by service demand in 2015 to obtain normalized cost
+AccidentFreight_2015 <- Freight_2015 %>%
+  mutate(value = value * 0.09 * 0.026 * 10^12,
+         Units = "2015$") %>%
+  left_join(FreightRoad_Liquid_2015, by = c("scenario", "region", "experiment", "old_scen_name", "year"),
+            suffix = c(".USD", ".mill_ton_km")) %>%
+  mutate(value = value.USD/value.mill_ton_km,
+         Units = "2015$/mill_ton_km") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Units)
+
+#multiply normalized cost by service demand across years
+AccidentFreight <- FreightRoad %>%
+  filter(year >= 2015 & year <= 2050) %>%
+  left_join(AccidentFreight_2015, by = c("scenario", "region", "experiment", "old_scen_name"),
+            suffix = c(".mill_ton_km", ".2015USD_mill_ton_km")) %>%
+  mutate(value = value.mill_ton_km * value.2015USD_mill_ton_km,
+         year = year.mill_ton_km,
+         Units = "2015$") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Units)
+
+#Road damages
+RdDamageGasolinePass_2015 <- GasolinePass_2015 %>%
+  mutate(value = value * 0 * 0.03 * 10^12,
+         Units = "2015$")
+
+RdDamageDieselPass_2015 <- DieselPass_2015 %>%
+  mutate(value = value * 0.01 * 0.026 * 10^12,
+         Units = "2015$")
+
+#add diesel and gasoline costs together
+#divide by service demand in 2015 to obtain normalized cost
+RdDamagePass_2015 <- bind_rows(RdDamageDieselPass_2015,
+                               RdDamageGasolinePass_2015) %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  left_join(PassRoad_Liquid_2015, by = c("scenario", "region", "experiment", "old_scen_name", "year"),
+            suffix = c(".USD", ".mill_pass_km")) %>%
+  mutate(value = value.USD/value.mill_pass_km,
+         Units = "2015$/mill_pass_km") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Units)
+
+#multiply normalized cost by service demand across years
+RdDamagePass <- PassRoad %>%
+  filter(year >= 2015 & year <= 2050) %>%
+  left_join(RdDamagePass_2015, by = c("scenario", "region", "experiment", "old_scen_name"),
+            suffix = c(".mill_pass_km", ".2015USD_mill_pass_km")) %>%
+  mutate(value = value.mill_pass_km * value.2015USD_mill_pass_km,
+         year = year.mill_pass_km,
+         Units = "2015$")%>%
+  select(scenario, region, experiment, old_scen_name, year, value, Units)
+
+#divide by service demand in 2015 to obtain normalized cost
+RdDamageFreight_2015 <- Freight_2015 %>%
+  mutate(value = value * 0.01 * 0.026 * 10^12,
+         Units = "2015$") %>%
+  left_join(FreightRoad_Liquid_2015, by = c("scenario", "region", "experiment", "old_scen_name", "year"),
+            suffix = c(".USD", ".mill_ton_km")) %>%
+  mutate(value = value.USD/value.mill_ton_km,
+         Units = "2015$/mill_ton_km") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Units)
+
+#multiply normalized cost by service demand across years
+RdDamageFreight <- FreightRoad %>%
+  filter(year >= 2015 & year <= 2050) %>%
+  left_join(RdDamageFreight_2015, by = c("scenario", "region", "experiment", "old_scen_name"),
+            suffix = c(".mill_ton_km", ".2015USD_mill_ton_km")) %>%
+  mutate(value = value.mill_ton_km * value.2015USD_mill_ton_km,
+         year = year.mill_ton_km,
+         Units = "2015$") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Units)
+
+# Total transportation externality costs
+TrnExternalityPass <- bind_rows(CongestionPass,
+                                AccidentPass,
+                                RdDamagePass) %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  mutate(Metric = "Passenger transport externality costs")
+
+TrnExternalityFreight <- bind_rows(CongestionFreight,
+                                   AccidentFreight,
+                                   RdDamageFreight) %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  mutate(Metric = "Freight transport externality costs")
+
+TrnCongestion <- bind_rows(CongestionPass,
+                           CongestionFreight) %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  mutate(Metric = "Congestion costs")
+
+TrnAccidents <- bind_rows(AccidentPass,
+                          AccidentFreight) %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  mutate(Metric = "Accident costs")
+
+TrnRdDamage <- bind_rows(RdDamagePass,
+                         RdDamageFreight) %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  mutate(Metric = "Road damage costs")
+
+TrnExternality <- bind_rows(TrnExternalityPass,
+                            TrnExternalityFreight) %>%
+  group_by(scenario, region, experiment, old_scen_name, year, Units) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  mutate(Metric = "Transportation externality costs")
+
+TrnPassRoadServ <- PassRoad %>%
+  filter(year >= 2015 & year <= 2050) %>%
+  mutate(Metric = "Road Transport passenger service demand")
+
+TrnFreightRoadServ <- FreightRoad %>%
+  filter(year >= 2015 & year <= 2050) %>%
+  mutate(Metric = "Road Transport freight service demand")
+
+Metrics <- rbind(as_tibble(TrnCongestion),
+                 as_tibble(TrnAccidents),
+                 as_tibble(TrnRdDamage),
+                 as_tibble(TrnExternality),
+                 as_tibble(TrnPassRoadServ),
+                 as_tibble(TrnFreightRoadServ))
+
+rdm_cart(TrnCongestion)
+rdm_cart(TrnAccidents)
+rdm_cart(TrnRdDamage)
+rdm_cart(TrnExternality)
+rdm_cart(TrnPassRoadServ)
+rdm_cart(TrnFreightRoadServ)
+
+if(!file.exists(paste0(export_dir, 'TrnExternalityCosts/'))){
+  dir.create(paste0(export_dir, 'TrnExternalityCosts/'))
+}
+#select_exps <- c('66', '82', '70', '86')
+for(i in seq(length(unique(Metrics$Metric)))){
+  M <- Metrics %>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
+  plot_df <- M
+  fig_path <- c(paste(export_dir, 'TrnExternalityCosts/', unique(Metrics$Metric)[i], '.png', sep = ""))
+  y_lbl <- paste(M$Metric[1], ' (', M$Units[1], ')', sep = "")
+  line_plot(
+    plot_df,
+    fig_path,
+    plot_scens,
+    y_lbl = y_lbl,
+    x_lbl = x_lbl,
+    title = NULL,
+    x_min = x_min,
+    x_max = x_max,
+    legend_on = FALSE,
+    gray_ribbon = TRUE,
+    plot_by_select_experiment = FALSE,
+    distribution = TRUE
+  )
+}
