@@ -1,3 +1,5 @@
+# Please use Python 3.8 to run this script
+
 # Imports
 import itertools
 import copy
@@ -46,7 +48,6 @@ XL_cat = {'Strategy_1_High': ['RPS', 'Nuclear'],
           'Strategy_4_High': ['PublicTrans'],
           'Strategy_4_Low': ['PublicTrans'],
           'Strategy_5_High': ['AFOLU'],
-          'Strategy_5_Low': ['AFOLU'],
           'Strategy_6_High': ['Meat'],
           'Uncertainty_1_High': ['GDP', 'Population'],
           'Uncertainty_1_Low': ['GDP', 'Population'],
