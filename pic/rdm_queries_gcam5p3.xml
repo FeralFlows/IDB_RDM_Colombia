@@ -13,7 +13,6 @@
 
 <aQuery>
        <region name="Colombia" />
-
             <supplyDemandQuery title="building service costs">
                <axis1 name="sector">sector</axis1>
                <axis2 name="Year">cost</axis2>
@@ -1349,6 +1348,7 @@
 
 
 <aQuery>
+<region name="Colombia" />
     <supplyDemandQuery title="Quantity available for crop commodity demand (domestic and imported)">
                 <axis1 name="technology">technology</axis1>
                 <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -1376,7 +1376,6 @@
 
 <aQuery>
 <region name="USA" />
-<region name="Global" />
 <supplyDemandQuery title="traded ag commodity sources">
     <axis1 name="input">input</axis1>
     <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -1469,6 +1468,30 @@
             <comments/>
          </supplyDemandQuery>
 	</aQuery>
+
+
+ <aQuery>
+		<all-regions/>
+ <supplyDemandQuery title="ag production by crop type">
+               <axis1 name="sector">sector[@name]</axis1>
+               <axis2 name="Year">physical-output[@vintage]</axis2>
+               <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type='sector' and (local-name()='AgSupplySector')]//
+            output-primary/physical-output/node()</xPath>
+               <comments>primary output only (no residue biomass)</comments>
+            </supplyDemandQuery>
+ </aQuery>
+
+<aQuery>
+		<all-regions/>
+      <supplyDemandQuery title="Ag Commodity Prices">
+         <axis1 name="sector">sector</axis1>
+         <axis2 name="Year">cost</axis2>
+         <xPath buildList="true" dataName="yield" group="false" sumAll="false">*[@type='sector' and
+            (exists(child::keyword/@supplysector) or local-name() =
+            'AgSupplySector')]/cost/text()</xPath>
+         <comments/>
+      </supplyDemandQuery>
+   </aQuery>
 
 <aQuery>
 		<all-regions/>
