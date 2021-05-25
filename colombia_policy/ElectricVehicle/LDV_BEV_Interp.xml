@@ -6,77 +6,133 @@
                 <tranSubsector name="Compact Car">
                     <stub-technology name="BEV">
                         <interpolation-rule apply-to="share-weight"
-                            delete="1" from-year="2010" to-year="2030">
+                            delete="1" from-year="2010" to-year="2050">
+                            <interpolation-function name="linear"/>
+		                    <overwrite-policy warn="0">NEVER</overwrite-policy>
+                        </interpolation-rule>
+                        <interpolation-rule apply-to="share-weight"
+                            from-year="2010" to-year="2030">
                             <to-value>2</to-value>
                             <interpolation-function name="linear"/>
                         </interpolation-rule>
                         <interpolation-rule apply-to="share-weight"
-                            delete="1" from-year="2030" to-year="2050">
+                            from-year="2030" to-year="2050">
                             <to-value>3</to-value>
                             <interpolation-function name="linear"/>
                         </interpolation-rule>
                         <interpolation-rule apply-to="share-weight"
-                            delete="1" from-year="2050" to-year="2100">
+                            from-year="2050" to-year="2100">
                             <to-value>4</to-value>
                             <interpolation-function name="linear"/>
                         </interpolation-rule>
-                    </stub-technology>
-                </tranSubsector>
-                <tranSubsector name="Large Car and SUV">
-                    <stub-technology name="BEV">
-                        <interpolation-rule apply-to="share-weight"
-                            delete="1" from-year="2010" to-year="2030">
-                            <to-value>2</to-value>
-                            <interpolation-function name="linear"/>
-                        </interpolation-rule>
-                        <interpolation-rule apply-to="share-weight"
-                            delete="1" from-year="2030" to-year="2050">
-                            <to-value>3</to-value>
-                            <interpolation-function name="linear"/>
-                        </interpolation-rule>
-                        <interpolation-rule apply-to="share-weight"
-                            delete="1" from-year="2050" to-year="2100">
-                            <to-value>4</to-value>
-                            <interpolation-function name="linear"/>
-                        </interpolation-rule>
-                    </stub-technology>
-                </tranSubsector>
-                <tranSubsector name="Mini Car">
-                    <stub-technology name="BEV">
-                        <interpolation-rule apply-to="share-weight"
-                            delete="1" from-year="2010" to-year="2030">
-                            <to-value>2</to-value>
-                            <interpolation-function name="linear"/>
-                        </interpolation-rule>
-                        <interpolation-rule apply-to="share-weight"
-                            delete="1" from-year="2030" to-year="2050">
-                            <to-value>3</to-value>
-                            <interpolation-function name="linear"/>
-                        </interpolation-rule>
-                        <interpolation-rule apply-to="share-weight"
-                            delete="1" from-year="2050" to-year="2100">
-                            <to-value>4</to-value>
-                            <interpolation-function name="linear"/>
-                        </interpolation-rule>
+                    <period year="2030">
+                        <share-weight>2</share-weight>
+				    </period>
+                    <period year="2050">
+                        <share-weight>3</share-weight>
+				    </period>
+                    <period year="2100">
+                        <share-weight>4</share-weight>
+				    </period>
                     </stub-technology>
                 </tranSubsector>
                 <tranSubsector name="Subcompact Car">
                     <stub-technology name="BEV">
                         <interpolation-rule apply-to="share-weight"
-                            delete="1" from-year="2010" to-year="2030">
+                            delete="1" from-year="2010" to-year="2050">
+                            <interpolation-function name="linear"/>
+		                    <overwrite-policy warn="0">NEVER</overwrite-policy>
+                        </interpolation-rule>
+                        <interpolation-rule apply-to="share-weight"
+                            from-year="2010" to-year="2030">
                             <to-value>2</to-value>
                             <interpolation-function name="linear"/>
                         </interpolation-rule>
                         <interpolation-rule apply-to="share-weight"
-                            delete="1" from-year="2030" to-year="2050">
+                            from-year="2030" to-year="2050">
                             <to-value>3</to-value>
                             <interpolation-function name="linear"/>
                         </interpolation-rule>
                         <interpolation-rule apply-to="share-weight"
-                            delete="1" from-year="2050" to-year="2100">
+                            from-year="2050" to-year="2100">
                             <to-value>4</to-value>
                             <interpolation-function name="linear"/>
                         </interpolation-rule>
+                    <period year="2030">
+                        <share-weight>0</share-weight>
+				    </period>
+                    <period year="2050">
+                        <share-weight>0</share-weight>
+				    </period>
+                    <period year="2100">
+                        <share-weight>0</share-weight>
+				    </period>
+                    </stub-technology>
+                </tranSubsector>
+                <tranSubsector name="Mini Car">
+                    <stub-technology name="BEV">
+                        <interpolation-rule apply-to="share-weight"
+                            delete="1" from-year="2010" to-year="2050">
+                            <interpolation-function name="linear"/>
+		                    <overwrite-policy warn="0">NEVER</overwrite-policy>
+                        </interpolation-rule>
+                        <interpolation-rule apply-to="share-weight"
+                            from-year="2010" to-year="2030">
+                            <to-value>2</to-value>
+                            <interpolation-function name="linear"/>
+                        </interpolation-rule>
+                        <interpolation-rule apply-to="share-weight"
+                            from-year="2030" to-year="2050">
+                            <to-value>3</to-value>
+                            <interpolation-function name="linear"/>
+                        </interpolation-rule>
+                        <interpolation-rule apply-to="share-weight"
+                            from-year="2050" to-year="2100">
+                            <to-value>4</to-value>
+                            <interpolation-function name="linear"/>
+                        </interpolation-rule>
+                    <period year="2030">
+                        <share-weight>0</share-weight>
+				    </period>
+                    <period year="2050">
+                        <share-weight>0</share-weight>
+				    </period>
+                    <period year="2100">
+                        <share-weight>0</share-weight>
+				    </period>
+                    </stub-technology>
+                </tranSubsector>
+                <tranSubsector name="Large Car and SUV">
+                    <stub-technology name="BEV">
+                        <interpolation-rule apply-to="share-weight"
+                            delete="1" from-year="2010" to-year="2050">
+                            <interpolation-function name="linear"/>
+		                    <overwrite-policy warn="0">NEVER</overwrite-policy>
+                        </interpolation-rule>
+                        <interpolation-rule apply-to="share-weight"
+                            from-year="2010" to-year="2030">
+                            <to-value>2</to-value>
+                            <interpolation-function name="linear"/>
+                        </interpolation-rule>
+                        <interpolation-rule apply-to="share-weight"
+                            from-year="2030" to-year="2050">
+                            <to-value>3</to-value>
+                            <interpolation-function name="linear"/>
+                        </interpolation-rule>
+                        <interpolation-rule apply-to="share-weight"
+                            from-year="2050" to-year="2100">
+                            <to-value>4</to-value>
+                            <interpolation-function name="linear"/>
+                        </interpolation-rule>
+                    <period year="2030">
+                        <share-weight>0</share-weight>
+				    </period>
+                    <period year="2050">
+                        <share-weight>0</share-weight>
+				    </period>
+                    <period year="2100">
+                        <share-weight>0</share-weight>
+				    </period>
                     </stub-technology>
                 </tranSubsector>
             </supplysector>
