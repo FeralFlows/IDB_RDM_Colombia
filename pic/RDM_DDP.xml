@@ -5,7 +5,7 @@
 		<Value name="BatchFileName">batch_ag.xml</Value>
 		<Value name="policy-target-file">../input/policy/forcing_target_4p5.xml</Value>
 		<Value name="GHGInputFileName">../input/magicc/inputs/input_gases.emk</Value>
-		<Value write-output="1" append-scenario-name="0" name="xmldb-location">../output/FinalRuns</Value>
+		<Value write-output="1" append-scenario-name="0" name="xmldb-location">../output/FinalRuns/IDB_RDM</Value>
 		<Value write-output="0" append-scenario-name="0" name="restart">./restart/restart</Value>
 		<Value write-output="0" append-scenario-name="1" name="xmlDebugFileName">debug.xml</Value>
 		<Value write-output="0" append-scenario-name="0" name="climatFileName">gas.emk</Value>
@@ -71,11 +71,9 @@
 		<Value name = "an_water">../input/gcamdata/xml/water_demand_livestock.xml</Value>
 		<Value name = "municipal_water">../input/gcamdata/xml/water_demand_municipal.xml</Value>
 		<Value name = "primary_ene_water">../input/gcamdata/xml/water_demand_primary.xml</Value>
-
 		<Value name = "bio_feedstock_limit">../input/gcamdata/xml/liquids_limits.xml</Value>
 		<Value name = "bio_elec_w_feed_limit">../input/gcamdata/xml/water_elec_liquids_limits.xml</Value>
 		<!--<Value name = "LAC_neg_emiss_budget">../input/idb/reference/negative_emissions_budget_gSSP2_LAC_V2.xml</Value>-->
-
 		<!--Reference files and climate impacts files from above-->
 		<!--Colombia-specific files-->
 	    <!-- Socio-Economics -->
@@ -110,15 +108,15 @@
       <Value name = "Uruguay_refWat_ref">../input/idb/reference/Uruguay_refWat_L2072.AgCoef_IrrWaterWdraw_ag_mgmt.xml</Value>
 		<!--Argentina-specific files-->
 	    <!-- Socio-Economics -->
-       <Value name = "LowerRenewablesCosts">../input/idb/rdm/L223.GlobalIntTechCapital_elec_low.xml</Value>
-       <Value name = "LowerElecCosts">../input/idb/rdm/L223.GlobalTechCapital_elec_low.xml</Value>
 		<Value name = "argentina_population_gdp">../input/idb/reference/Argentina_refPop_gSSP2.xml</Value>
-       <Value name = "policy">../input/idb/policy/CarbonTax_CO2_NonCO2_CO_ARG.xml</Value>
-       <Value name = "policy link file">../input/idb/policy/CarbonTax_CO2_NonCO2_LINK_CO_ARG.xml</Value>
+       <Value name = "LowerRenewablesCosts">../input/idb/rdm/L223.GlobalIntTechCapital_elec_low.xml</Value>
+       <Value name = "LowerElecCosts">../input/idb/rdm/L223.GlobalTechCapital_elec_low.xml</Value>	
+		<!--Add Co2 constraint for delayed endpoint DDP scenario-->
+       <Value name = "policy">../input/idb/policy/ddp_colombia_co2_constraint.xml</Value>
+       <Value name = "policy">../input/idb/policy/ddp_other_regions_co2_constraint.xml</Value>
 
-
+       <Value name = "policy link file">../input/idb/policy/ddp_LINK.xml</Value>
 		<Value name = "solver">../input/solution/cal_broyden_config.xml</Value>
-	
 	</ScenarioComponents>
 	<Strings>
 		<Value name="scenarioName">DDP</Value>

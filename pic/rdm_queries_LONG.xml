@@ -2,7 +2,7 @@
 <queries>
 
 <aQuery>
-		<all-regions/>
+       <region name="Colombia" />
 <supplyDemandQuery title="Final energy by detailed end-use sector and fuel">
          <axis1 name="sector">sector</axis1>
          <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -11,10 +11,8 @@
       </supplyDemandQuery>
  </aQuery>
 
-
-
 <aQuery>
-		<all-regions/>  
+       <region name="Colombia" />
             <supplyDemandQuery title="refined liquids production by subsector">
                <axis1 name="subsector">subsector</axis1>
                <axis2 name="Year">physical-output[@vintage]</axis2>
@@ -25,7 +23,7 @@
  </aQuery>
 
  <aQuery>
-		<all-regions/>
+       <region name="Colombia" />
  <supplyDemandQuery title="ag production by tech">
             <axis1 name="technology">technology[@name]</axis1>
             <axis2 name="Year">physical-output[@vintage]</axis2>
@@ -37,7 +35,7 @@
  </aQuery>
 
  <aQuery>
-		<all-regions/>
+       <region name="Colombia" />
  <supplyDemandQuery title="land allocation by crop and water source">
             <axis1 name="water">water[@name]</axis1>
             <axis2 name="Year">land-allocation[@year]</axis2>
@@ -89,7 +87,7 @@
  </aQuery>
 
  <aQuery>
-		<all-regions/>
+       <region name="Colombia" />
   <supplyDemandQuery title="biophysical water demand by crop type and land region">
                <axis1 name="sector">sector</axis1>
                <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -100,7 +98,7 @@
  </aQuery>
 
  <aQuery>
-		<all-regions/>
+       <region name="Colombia" />
 <supplyDemandQuery title="Land Use Change Emission (future)">
          <axis1 name="land-use-change-emission">LandLeaf</axis1>
          <axis2 name="Year">land-use-change-emission[@year]</axis2>
@@ -110,7 +108,7 @@
       </aQuery>
 
 <aQuery>
-		<all-regions/>
+       <region name="Colombia" />
   <emissionsQueryBuilder title="CO2 emissions by sector">
             <axis1 name="sector">sector</axis1>
             <axis2 name="Year">emissions</axis2>
@@ -120,7 +118,7 @@
      </aQuery>
 
 <aQuery>
-		<all-regions/>
+       <region name="Colombia" />
          <emissionsQueryBuilder title="nonCO2 emissions by sector">
             <axis1 name="GHG">GHG</axis1>
             <axis2 name="Year">emissions</axis2>
@@ -130,7 +128,7 @@
      </aQuery>
 
    	<aQuery>
-      <all-regions/>
+      <region name="Colombia" />
       <gdpQueryBuilder title="GDP per capita MER by region">
          <axis1 name="Region">region</axis1>
          <axis2 name="Year">gdp-per-capita-mer</axis2>
@@ -139,7 +137,7 @@
       </aQuery>
 	  
      <aQuery>
-		<all-regions/>
+		<region name="Colombia" />
          <gdpQueryBuilder title="GDP MER by region">
             <axis1 name="region">region</axis1>
             <axis2 name="Year">gdp-mer</axis2>
@@ -149,7 +147,7 @@
       </aQuery>
 
      <aQuery>
-		<all-regions/>
+		<region name="Colombia" />
          <demographicsQuery title="Population by region">
             <axis1 name="region">region</axis1>
             <axis2 name="Year">populationMiniCAM</axis2>
@@ -159,7 +157,7 @@
       </aQuery>
 
 <aQuery>
-		<all-regions/>
+		<region name="Colombia" />
       <supplyDemandQuery title="Electricity generation by aggregate technology ORDERED SUBSECTORS">
          <axis1 name="technology">technology</axis1>
          <axis2 name="Year">physical-output[@vintage]</axis2>
@@ -204,7 +202,7 @@
 
 
 <aQuery>
-		<all-regions/>
+		<region name="Colombia" />
       <supplyDemandQuery title="Electricity generation by aggregate technology">
          <axis1 name="technology">technology</axis1>
          <axis2 name="Year">physical-output[@vintage]</axis2>
@@ -249,7 +247,7 @@
 
 
 	<aQuery>
-      <all-regions/>
+      <region name="Colombia" />
       <supplyDemandQuery title="total final energy by aggregate sector">
          <axis1 name="sector">sector</axis1>
          <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -288,7 +286,7 @@
       </aQuery>
       
 <aQuery>
-      <all-regions/> 
+      <region name="Colombia" /> 
 		<supplyDemandQuery title="primary energy consumption by region (direct equivalent) ORDERED SUBSECTORS">
             <axis1 name="fuel">input[@name]</axis1>
             <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -382,7 +380,7 @@
 
 
 	<aQuery>
-      <all-regions/>
+      <region name="Colombia" />
       <supplyDemandQuery title="water withdrawals by sector">
          <axis1 name="sector">sector</axis1>
          <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -442,7 +440,7 @@
       </aQuery>
 	  
 	<aQuery>
-      <all-regions/>
+      <region name="Colombia" />
       <supplyDemandQuery title="water withdrawals by crop">
          <axis1 name="sector">sector</axis1>
          <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -490,7 +488,7 @@
       </aQuery>
 	
 	<aQuery>
-      <all-regions/>
+      <region name="Colombia" />
       <supplyDemandQuery title="water consumption by sector">
          <axis1 name="sector">sector</axis1>
          <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -550,7 +548,7 @@
 	</aQuery>
 	
 	<aQuery>
-      <all-regions/>
+      <region name="Colombia" />
       <supplyDemandQuery title="Ag Production by Crop Type">
          <axis1 name="sector">sector[@name]</axis1>
          <axis2 name="Year">physical-output[@vintage]</axis2>
@@ -559,7 +557,7 @@
     </aQuery>
 
 <aQuery>
-      <all-regions/>
+      <region name="Colombia" />
      <supplyDemandQuery title="water consumption by water mapping source">
          <axis1 name="input">input</axis1>
          <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -569,7 +567,7 @@
 	</aQuery>
 
 	<aQuery>
-      <all-regions/>
+      <region name="Colombia" />
      <supplyDemandQuery title="water withdrawals by water mapping source">
          <axis1 name="input">input</axis1>
          <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -579,7 +577,7 @@
 	</aQuery>
 
 <aQuery>
-      <all-regions/>
+      <region name="Colombia" />
 <query title="aggregated land allocation">
             <axis1 name="LandLeaf">LandLeaf[@crop]</axis1>
             <axis2 name="Year">land-allocation[@year]</axis2>
@@ -621,7 +619,7 @@
 	</aQuery>
 
 	<aQuery>
-      <all-regions/>
+      <region name="Colombia" />
          <query title="land allocation by crop">
             <axis1 name="LandLeaf">LandLeaf[@crop]</axis1>
             <axis2 name="Year">land-allocation[@year]</axis2>
@@ -631,7 +629,7 @@
 	</aQuery>
 
 	<aQuery>
-      <all-regions/>
+      <region name="Colombia" />
             <supplyDemandQuery title="building final energy by fuel">
                <axis1 name="input">input</axis1>
                <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -642,7 +640,7 @@
 	</aQuery>
 
 	<aQuery>
-      <all-regions/>
+      <region name="Colombia" />
             <supplyDemandQuery title="transport final energy by fuel">
                <axis1 name="input">input</axis1>
                <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -653,7 +651,7 @@
 	</aQuery>
 
 	<aQuery>
-      <all-regions/>
+       <region name="Colombia" />
             <supplyDemandQuery title="industry final energy by fuel">
                <axis1 name="input">input</axis1>
                <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -666,7 +664,7 @@
 	</aQuery>
 
 	<aQuery>
-      <all-regions/>
+       <region name="Colombia" />
             <supplyDemandQuery title="transport service output by mode">
                <axis1 name="mode">subsector</axis1>
                <axis2 name="Year">physical-output[@vintage]</axis2>
@@ -678,7 +676,7 @@
 	</aQuery>
 
 	<aQuery>
-      <all-regions/>
+       <region name="Colombia" />
             <supplyDemandQuery title="building final energy by subsector">
                <axis1 name="subsector">subsector</axis1>
                <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -689,7 +687,7 @@
 	</aQuery>
 
 	<aQuery>
-      <all-regions/>
+       <region name="Colombia" />
             <supplyDemandQuery title="transport service output by tech (new)">
                <axis1 name="technology">technology</axis1>
                <axis2 name="Year">physical-output[@vintage]</axis2>
@@ -701,7 +699,7 @@
 	</aQuery>
 
 <aQuery>
-      <all-regions/>
+       <region name="Colombia" />
          <supplyDemandQuery title="CO2 emissions by sector (no bio)">
             <axis1 name="sector">sector[@name]</axis1>
             <axis2 name="Year">emissions[@year]</axis2>
@@ -894,7 +892,7 @@
 	</aQuery>
 
  <aQuery>
-		<all-regions/>
+       <region name="Colombia" />
       <emissionsQueryBuilder title="nonCO2 emissions by resource production">
          <axis1 name="GHG">GHG</axis1>
          <axis2 name="Year">emissions</axis2>
@@ -904,7 +902,7 @@
     </aQuery>
 
 <aQuery>
-		<all-regions/>
+       <region name="Colombia" />
 		<supplyDemandQuery title="transport final energy by mode and fuel">
                <axis1 name="mode">subsector</axis1>
                <axis2 name="Year">demand-physical[@vintage]</axis2>
@@ -916,7 +914,7 @@
     </aQuery>
 
 	<aQuery>
-      <all-regions/>
+       <region name="Colombia" />
             <supplyDemandQuery title="elec gen by gen tech and cooling tech and vintage">
                <axis1 name="technology">technology</axis1>
                <axis2 name="Year">physical-output[@vintage]</axis2>
