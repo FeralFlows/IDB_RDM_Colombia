@@ -13,6 +13,8 @@ import xml.etree.ElementTree as ET
 
 X_fac = {'Colombia_Population': ['Low', 'Mid', 'High'],
         'Colombia_GDP': ['Low', 'Mid', 'High'],
+        'Colombia_Nuclear': ['Normal', 'Zero'],
+        'Global_CCS_Cost': ['Normal', 'High'],
         'climate_scen':
              {
         'Global_GCM': ['NorESM1-M', 'GFDL-ESM2M', 'MIROC-ESM-CHEM', 'IPSL-CM5A-LR', 'HadGEM2-ES'],
@@ -23,7 +25,7 @@ X_fac = {'Colombia_Population': ['Low', 'Mid', 'High'],
 base_dir = 'C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/'
 base_pic_dir = '../input/'
 config_dir = base_dir + 'pic/'
-scenarios = ['Reference', 'ColPol', 'DDP']
+scenarios = ['Reference', 'ColPol', 'DDP', 'DDP_Delayed_CumEmiss', 'DDP_Delayed_EndPt']
 for gcam_scen in scenarios:
     base_config_file = 'RDM_' + gcam_scen + '.xml'  #  'configuration_LAC.xml'
     tree=ET.parse(config_dir + base_config_file)
@@ -73,9 +75,9 @@ for gcam_scen in scenarios:
             factor_file_list_orig2[row][column].attrib = {'name':'uncertainty_combination_elem'+str(column)}
             factor_file_list_orig2[row][column].text = factor_file_list_orig[row][column]  # + '\n'
         root[0][4].text = '../../output/FinalRuns/IDB_RDM/uncertainty_' + scen  # Change output database location
-        tree.write(base_dir + 'uncertainty/config_files/output/' 'RDM_' + gcam_scen + '_' + scen + '.xml')  # Write
-        # XML
-        # file
+        xml_text = base_dir + 'uncertainty/config_files/output/' + 'RDM_' + gcam_scen + '_' + scen + '.xml'
+        # parser = etree.XMLParser(remove_blank_text=True)
+        tree.write(xml_text)  # , pretty_print = True
         # Void added items so they don't appear in subsequent XML files.
         for column in range(len(factor_file_list_orig2[0])):
             scenComp.remove(factor_file_list_orig2[row][column])
