@@ -23,11 +23,12 @@ if('rgcam' %in% rownames(installed.packages()) == F){devtools::install_github(re
 library(rgcam)
 if('metis' %in% rownames(installed.packages()) == F){devtools::install_github(repo="JGCRI/metis")}
 library(metis)
+library(rfasst)
 
 # Set directories, load extra files ---------------------------------------
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 metrics_folder <- getwd()
-run_name <- 'runs_512_02_08_2021' # only need to change this to the run folder name
+run_name <- 'runs_04_08_2021_test' # 'runs_512_02_08_2021' # only need to change this to the run folder name
 setwd(paste('..', run_name, sep = '/'))
 
 base_dir <- paste(getwd(), 'query_proj/', sep = '/')
@@ -53,8 +54,9 @@ x_max <- 2050
 source(paste(metrics_folder, 'RDM_plotting_distribution.R', sep = '/'))
 source(paste(metrics_folder, 'RDM_CART_fns.R', sep = '/'))
 
-
-#  Intermittent Renewables ----------------------------------------------
+# --------------------------------------------------------------------------
+# 1. Intermittent Renewables
+# --------------------------------------------------------------------------
 qry <- "Electricity generation by aggregate technology.proj"
 prj_path <- paste0(base_dir, qry)
 prj <- loadProject(prj_path)
@@ -78,6 +80,34 @@ PowGenRenewInt <- PowGenRenewIntGW %>%
             by = c('scenario', 'region', 'experiment', 'old_scen_name', 'Units', 'year'),
             suffix = c('.int', '.total')) %>%
   mutate(value = value.int/value.total * 100, Metric = "Wind and Solar Percentage", Units = "%") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
+
+## Renewable Power Generation
+PowGenRenewGW <- ElecGenAggTech %>%
+  filter(technology %in% c("Solar", "Wind", 'Biomass', 'Biomass w/CCS', 'Hydro')) %>%
+  group_by(scenario, region, experiment, old_scen_name, year) %>%
+  dplyr::summarise(value = sum(value) * 2.777 * (10 ** 2)) %>%
+  mutate(Metric = "Renewable Power Generation", Units = "Thous GWh")
+
+PowGenRenewPct <- PowGenRenewGW %>%
+  left_join(TotalPowGen,
+            by = c('scenario', 'region', 'experiment', 'old_scen_name', 'Units', 'year'),
+            suffix = c('.renew', '.total')) %>%
+  mutate(value = value.renew/value.total * 100, Metric = "Renewable Percentage", Units = "%") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
+
+## Low Carbon Power Generation
+PowGenLowCarb <- ElecGenAggTech %>%
+  filter(technology %in% c("Solar", "Wind", 'Hydro', 'Biomass', 'Biomass w/CCS', 'Nuclear', 'Gas w/CCS')) %>%
+  group_by(scenario, region, experiment, old_scen_name, year) %>%
+  dplyr::summarise(value = sum(value) * 2.777 * (10 ** 2)) %>%
+  mutate(Metric = "Low Carbon Power Generation", Units = "Thous GWh")
+
+PowGenLowCarbPct <- PowGenLowCarb %>%
+  left_join(TotalPowGen,
+            by = c('scenario', 'region', 'experiment', 'old_scen_name', 'Units', 'year'),
+            suffix = c('.lowcarb', '.total')) %>%
+  mutate(value = value.lowcarb/value.total * 100, Metric = "Low Carbon Power Percentage", Units = "%") %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
 
 ## Hydro
@@ -118,15 +148,15 @@ RPS_pct <- ren_RPS %>%
 
 
 # GHG Emissions --------------------------------------------------
+## Negative CO2 Emissions
 qry <- "CO2 emissions by sector.proj"
 prj_path <- paste0(base_dir, qry)
 prj <- loadProject(prj_path)
 
-
 CO2Sector <- prj$data$`CO2 emissions by sector`
 
-NegativeCO2 <- CO2Sector %>% 
-  filter(sector %in% c('regional biomass', 'regional biomassOil', 'regional sugar for ethanol')) %>% 
+NegativeCO2 <- CO2Sector %>%
+  filter(sector %in% c('regional biomass', 'regional biomassOil', 'regional sugar for ethanol')) %>%
   group_by(scenario, region, experiment, old_scen_name, Units, year) %>%
   dplyr::summarise(value = sum(value) * 44/12) %>%
   mutate(Metric = 'Negative CO2 Emission',
@@ -135,14 +165,20 @@ NegativeCO2 <- CO2Sector %>%
 
 Metrics <- rbind(as_tibble(PowGenRenewInt),
                  as_tibble(PowGenRenewIntGW),
+                 as_tibble(PowGenRenewPct),
+                 as_tibble(PowGenLowCarbPct),
                  as_tibble(PowGenHydro),
                  as_tibble(PowGenHydroGW),
+                 as_tibble(TotalPowGen),
                  as_tibble(NegativeCO2))
 
 rdm_cart(PowGenRenewInt)
 rdm_cart(PowGenRenewIntGW)
+rdm_cart(PowGenRenewPct)
+rdm_cart(PowGenLowCarbPct)
 rdm_cart(PowGenHydro)
 rdm_cart(PowGenHydroGW)
+rdm_cart(TotalPowGen)
 rdm_cart(NegativeCO2)
 
 if(!file.exists(paste0(export_dir, '1-IntermittentRenewables/'))){
@@ -201,7 +237,10 @@ NonCO2_total_MTCO2e <- NonCO2_species_MTCO2e %>%
   dplyr::summarise(value = sum(value)) %>%
   mutate(Metric = "Nonco2 Emissions")
 
+
+# --------------------------------------------------------------------------
 # LUC emissions
+# --------------------------------------------------------------------------
 qry <- "Land Use Change Emission (future).proj"
 prj_path <- paste0(base_dir, qry)
 prj <- loadProject(prj_path)
@@ -284,7 +323,10 @@ plot <- LUC_emissions_filtered %>%
     ,legend.position =    c('right')  # c(0.95, 0.95)
   )+
   ggsave(fig_path, height = 3.4, width = 4, units = "in")
-# Air Pollution --------------------------------------------------------
+
+# --------------------------------------------------------------------------
+# 2. Air Pollution
+# --------------------------------------------------------------------------
 
 ## NOx
 NOx <- NonCO2_species %>%
@@ -314,10 +356,33 @@ OC <- NonCO2_species %>%
   dplyr::summarise(value = sum(value)) %>%
   mutate(Metric = "OC Emissions")
 
+## PM2.5
+### This results is based on the output from rfasst
+pm25 <- m2_get_conc_pm25(db_path = NULL,
+                         query_path = NULL,
+                         db_name = NULL,
+                         prj_name = NULL,
+                         scen_name = 'NoPol_0',
+                         queries = NULL,
+                         prj_path=base_dir,
+                         read_prj=T,
+                         saveOutput = F,
+                         map = F)
+PM2.5 <- pm25 %>%
+  dplyr::filter(region %in% 'RSAM') %>%
+  dplyr::mutate(scenario = 'DDPXL',
+                old_scen_name = paste0(scenario, '_', Scenario),
+                Metric = 'PM 2.5') %>%
+  dplyr::rename(Units = units,
+                experiment = Scenario) %>% 
+  dplyr::mutate(year = as.numeric(as.character(year)))
+
+
 Metrics <- rbind(as_tibble(NOx),
                  as_tibble(SO2),
                  as_tibble(BC),
-                 as_tibble(OC))
+                 as_tibble(OC),
+                 as_tibble(PM2.5))
 
 rdm_cart(NOx)
 rdm_cart(SO2)
@@ -350,8 +415,9 @@ for(i in seq(length(unique(Metrics$Metric)))){
   )
   }
 
-
-# Crops & Biomass -----------------------------------------------------
+# --------------------------------------------------------------------------
+# 3. Crops & Biomass
+# --------------------------------------------------------------------------
 
 qry <- "aggregated land allocation.proj"
 prj_path <- paste0(base_dir, qry)
@@ -368,9 +434,26 @@ UnmanagedLand <- AggLandAlloc %>%
          Units = "Thous. Ha",
          Metric = 'Unmanaged Land')
 
+## Forestland
+ForestLand <- AggLandAlloc %>%
+  filter(landleaf %in% c("forest (unmanaged)", "forest (managed)")) %>%
+  group_by(scenario, region, Units, year, experiment, old_scen_name) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  mutate(value = value*100,
+         Units = "Thous. Ha",
+         Metric = 'Forest Land')
+
+##Value of forestland
+ValueForestLand <- ForestLand %>%
+  # From Costanza et al. (2014) paper, value of forest in 2011 was 3800 $2007/ha/yr
+  # Use GDP deflator 100/88.3 to convert to $2015/ha/yr
+  mutate(value = value * 3800 * 100/88.3,
+         Units = "Value of Forest Land")
+
+
 ## Crop land
 CropLand <- AggLandAlloc %>%
-  filter(landleaf %in% c("crops")) %>%
+  filter(landleaf %in% c("crops", 'biomass')) %>%
   group_by(scenario, region, Units, year, experiment, old_scen_name) %>%
   dplyr::summarise(value = sum(value)) %>%
   mutate(value = value*100,
@@ -393,8 +476,8 @@ all <- PriEne %>%
 biomass <- PriEne %>%
   filter(fuel %in% c("d biomass")) %>%
   group_by(scenario, region, experiment, old_scen_name, year) %>%
-  dplyr::summarise(value = sum(value)) %>% 
-  mutate(Metric = "Biomass Primary Energy", Units = "EJ") %>% 
+  dplyr::summarise(value = sum(value)) %>%
+  mutate(Metric = "Biomass Primary Energy", Units = "EJ") %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
 
 ## Biomass percentage of primary energy (%)
@@ -402,6 +485,22 @@ biomassp <- biomass %>%
   left_join(all, by = c("scenario", "region", "experiment", "old_scen_name", "year")) %>%
   mutate(value = (value.x / value.y) * 100,
          Metric = "Biomass Share of Primary Energy",
+         Units = "%") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
+
+## Traditional biomass
+biomass_trad <- PriEne %>%
+  filter(fuel %in% c("j traditional biomass")) %>%
+  group_by(scenario, region, experiment, old_scen_name, year) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  mutate(Metric = "Traditional Biomass Primary Energy", Units = "EJ") %>%
+  select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
+
+## Traditional Biomass percentage of primary energy (%)
+biomassp_trad <- biomass_trad %>%
+  left_join(all, by = c("scenario", "region", "experiment", "old_scen_name", "year")) %>%
+  mutate(value = (value.x / value.y) * 100,
+         Metric = "Traditional Biomass Share of Primary Energy",
          Units = "%") %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
 
@@ -414,15 +513,15 @@ prj <- loadProject(prj_path)
 
 RefLiqProd <- prj$data$`refined liquids production by subsector`
 
-TotalRefLiq <- RefLiqProd %>% 
-  group_by(scenario, region, Units, experiment, old_scen_name, year) %>% 
+TotalRefLiq <- RefLiqProd %>%
+  group_by(scenario, region, Units, experiment, old_scen_name, year) %>%
   dplyr::summarise(value = sum(value))
-biomass_liq_ratio <- RefLiqProd %>% 
-  filter(subsector %in% 'biomass liquids') %>% 
+biomass_liq_ratio <- RefLiqProd %>%
+  filter(subsector %in% 'biomass liquids') %>%
   left_join(TotalRefLiq,
             by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year'),
-            suffix = c('.biomass', '.total')) %>% 
-  mutate(value = value.biomass/value.total) %>% 
+            suffix = c('.biomass', '.total')) %>%
+  mutate(value = value.biomass/value.total) %>%
   select(scenario, region, experiment, old_scen_name, year, value)
 
 ### Biofuel proportion of electricity generation
@@ -432,17 +531,17 @@ prj <- loadProject(prj_path)
 
 ElecGenTech <- prj$data$`elec gen by gen tech`
 
-TotalElecGenTech <- ElecGenTech %>% 
-  group_by(scenario, region, Units, experiment, old_scen_name, year) %>% 
+TotalElecGenTech <- ElecGenTech %>%
+  group_by(scenario, region, Units, experiment, old_scen_name, year) %>%
   dplyr::summarise(value = sum(value))
-biomass_elec_ratio <- ElecGenTech %>% 
-  filter(subsector %in% 'biomass') %>% 
-  group_by(scenario, region, experiment, old_scen_name, year) %>% 
-  dplyr::summarise(value = sum(value)) %>% 
+biomass_elec_ratio <- ElecGenTech %>%
+  filter(subsector %in% 'biomass') %>%
+  group_by(scenario, region, experiment, old_scen_name, year) %>%
+  dplyr::summarise(value = sum(value)) %>%
   left_join(TotalElecGenTech,
             by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year'),
-            suffix = c('.biomass', '.total')) %>% 
-  mutate(value = value.biomass/value.total) %>% 
+            suffix = c('.biomass', '.total')) %>%
+  mutate(value = value.biomass/value.total) %>%
   select(scenario, region, experiment, old_scen_name, year, value)
 
 
@@ -453,15 +552,15 @@ prj <- loadProject(prj_path)
 
 GasProTech <- prj$data$`gas production by tech`
 
-TotalGasProTech <- GasProTech %>% 
-  group_by(scenario, region, Units, experiment, old_scen_name, year) %>% 
+TotalGasProTech <- GasProTech %>%
+  group_by(scenario, region, Units, experiment, old_scen_name, year) %>%
   dplyr::summarise(value = sum(value))
-biomass_gas_ratio <- GasProTech %>% 
-  filter(subsector %in% 'biomass gasification') %>% 
+biomass_gas_ratio <- GasProTech %>%
+  filter(subsector %in% 'biomass gasification') %>%
   left_join(TotalGasProTech,
             by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year'),
-            suffix = c('.biomass', '.total')) %>% 
-  mutate(value = value.biomass/value.total) %>% 
+            suffix = c('.biomass', '.total')) %>%
+  mutate(value = value.biomass/value.total) %>%
   select(scenario, region, experiment, old_scen_name, year, value)
 
 ## Transportation Final Energy
@@ -471,49 +570,50 @@ prj <- loadProject(prj_path)
 
 TransFinal <- prj$data$`transport final energy by fuel`
 
-TotalTransFinal <- TransFinal %>% 
-  group_by(scenario, region, Units, experiment, old_scen_name, year) %>% 
+TotalTransFinal <- TransFinal %>%
+  group_by(scenario, region, Units, experiment, old_scen_name, year) %>%
   dplyr::summarise(value = sum(value))
 
 ## Biomass Final Energy in Liquids, Electricity, and Gas Transportation Final Energy
-BioTransFinal_liq <- TransFinal %>% 
-  filter(input %in% 'refined liquids enduse') %>% 
-  select(scenario, region, Units, experiment, old_scen_name, year, value) %>% 
+BioTransFinal_liq <- TransFinal %>%
+  filter(input %in% 'refined liquids enduse') %>%
+  select(scenario, region, Units, experiment, old_scen_name, year, value) %>%
   left_join(biomass_liq_ratio,
             by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year'),
-            suffix = c('.total', '.ratio')) %>% 
-  mutate(value = value.ratio * value.total) %>% 
+            suffix = c('.total', '.ratio')) %>%
+  mutate(value = value.ratio * value.total) %>%
   select(-value.ratio, -value.total)
-BioTransFinal_elec <- TransFinal %>% 
-  filter(input %in% 'elect_td_trn') %>% 
-  select(scenario, region, Units, experiment, old_scen_name, year, value) %>% 
+BioTransFinal_elec <- TransFinal %>%
+  filter(input %in% 'elect_td_trn') %>%
+  select(scenario, region, Units, experiment, old_scen_name, year, value) %>%
   left_join(biomass_elec_ratio,
             by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year'),
-            suffix = c('.total', '.ratio')) %>% 
-  mutate(value = value.ratio * value.total) %>% 
+            suffix = c('.total', '.ratio')) %>%
+  mutate(value = value.ratio * value.total) %>%
   select(-value.ratio, -value.total)
 BioTransFinal_gas <- TransFinal %>%
-  filter(input %in% 'delivered gas') %>% 
-  select(scenario, region, Units, experiment, old_scen_name, year, value) %>% 
+  filter(input %in% 'delivered gas') %>%
+  select(scenario, region, Units, experiment, old_scen_name, year, value) %>%
   left_join(biomass_gas_ratio,
             by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year'),
-            suffix = c('.total', '.ratio')) %>% 
-  mutate(value = value.ratio * value.total) %>% 
+            suffix = c('.total', '.ratio')) %>%
+  mutate(value = value.ratio * value.total) %>%
   select(-value.ratio, -value.total)
-  
+
 
 ### Biofuels as a proportion of transportation energy consumption (%)
 BiomassTrans <- Reduce(function(...)
   left_join(..., by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year')),
-  list(BioTransFinal_liq, BioTransFinal_elec, BioTransFinal_gas, TotalTransFinal)) %>% 
+  list(BioTransFinal_liq, BioTransFinal_elec, BioTransFinal_gas, TotalTransFinal)) %>%
   dplyr::rename(bio_liq = value.x,
          bio_elec = value.y,
          bio_gas = value.x.x,
-         total_trans = value.y.y) %>% 
+         total_trans = value.y.y) %>%
   mutate(value = (bio_liq + bio_elec + bio_gas)/total_trans * 100,
          Metric = 'Biofuels Share of Transportation Energy',
-         Units = '%') %>% 
+         Units = '%') %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
+
 
 
 ## Value of Crop Production
@@ -534,7 +634,7 @@ qry <- "Ag Production by Crop Type.proj"
 prj_path <- paste0(base_dir, qry)
 prj <- loadProject(prj_path)
 
-CropProdType <- prj$data$`Ag Production by Crop Type`
+CropProdType <- prj$data$`ag production by crop type`
 
 
 ValueCropProd <- CropProdType %>%
@@ -548,7 +648,7 @@ ValueCropProd <- CropProdType %>%
   # value of crop production = sum of (crop production X price of crop)
   # non-biomass crops: Mt * 1975$/kg * 10^9 * 4.25 2015$/1975$ = 2015$
   # biomass crops: EJ * 1975$/GJ * 10^9 * 4.25 2015$/1975$ = 2015$
-  mutate(value = if_else(output != "biomass", 
+  mutate(value = if_else(output != "biomass",
                          value.Prod * value.Price * 10^9 * 4.25,
                          value.Prod * value.Price * 10^9 * 4.25)) %>%
   group_by(scenario, experiment, old_scen_name, year) %>%
@@ -558,7 +658,7 @@ ValueCropProd <- CropProdType %>%
          region = "colombia",
          Metric = "Value of Crop Production") %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
-  
+
 ## Crop Exports
 qry <- "Crop exports.proj"
 prj_path <- paste0(base_dir, qry)
@@ -567,17 +667,17 @@ prj <- loadProject(prj_path)
 CropExports <- prj$data$`Crop exports`
 
 ### Crop Exports Value in $
-ValueCropExports <- CropExports %>% 
-  mutate(subsector = gsub('Colombia traded ', '', subsector)) %>% 
+ValueCropExports <- CropExports %>%
+  mutate(subsector = gsub('Colombia traded ', '', subsector)) %>%
   filter(subsector %in% c("corn", "fiberCrop", "Wheat",
                        "sugarCrop", "rice", "othergrain",
                        "oilCrop", "miscCrop", "palmfruit", "biomass")) %>%
   left_join(CropPrices, by = c("scenario", "input" = "market", "year", "experiment", "old_scen_name"),
-            suffix = c(".Exports", ".Price")) %>% 
+            suffix = c(".Exports", ".Price")) %>%
   # value of crop exports = sum of (crop exports X price of crop)
   # non-biomass crops: Mt * 1975$/kg * 10^9 * 4.25 2015$/1975$ = 2015$
   # biomass crops: EJ * 1975$/GJ * 10^9 * 4.25 2015$/1975$ = 2015$
-  mutate(value = if_else(input != "biomass", 
+  mutate(value = if_else(input != "biomass",
                          value.Exports * value.Price * 10^9 * 4.25,
                          value.Exports * value.Price * 10^9 * 4.25)) %>%
   group_by(scenario, experiment, old_scen_name, year) %>%
@@ -590,25 +690,34 @@ ValueCropExports <- CropExports %>%
 
 
 ### Biomass Exports in EJ
-BiomassExports <- CropExports %>% 
-  filter(sector %in% c('traded biomass') & subsector %in% 'Colombia traded biomass') %>% 
-  mutate(Metric = 'Biomass Exports') %>% 
+BiomassExports <- CropExports %>%
+  filter(sector %in% c('traded biomass') & subsector %in% 'Colombia traded biomass') %>%
+  mutate(Metric = 'Biomass Exports') %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
-  
-  
+
+
 Metrics <- rbind(as_tibble(UnmanagedLand),
+                 as_tibble(ForestLand),
+                 as_tibble(ValueForestLand),
                  as_tibble(CropLand),
                  as_tibble(biomass),
+                 as_tibble(biomass_trad),
                  as_tibble(biomassp),
+                 as_tibble(biomassp_trad),
                  as_tibble(ValueCropProd),
                  as_tibble(ValueCropExports),
                  as_tibble(BiomassExports),
                  as_tibble(BiomassTrans))
 
 rdm_cart(UnmanagedLand)
+rdm_cart(ForestLand)
+rdm_cart(ValueForestLand)
 rdm_cart(CropLand)
+rdm_cart(TCO2eqAgri) # need to run in another script.
 rdm_cart(biomass)
+rdm_cart(biomass_trad)
 rdm_cart(biomassp)
+rdm_cart(biomassp_trad)
 rdm_cart(ValueCropProd)
 rdm_cart(ValueCropExports)
 rdm_cart(BiomassExports)
@@ -639,8 +748,9 @@ for(i in seq(length(unique(Metrics$Metric)))){
   )
   }
 
-
-# Electricity Investments ----------------------------------------------
+# --------------------------------------------------------------------------
+# 4. Electricity Investments
+# --------------------------------------------------------------------------
 
 # Create dataFrame that will store all uncertainty results to be plotted
 plot_df <- data.frame(scenario = character(), experiment = integer(), region = character(), param = character(),
@@ -686,8 +796,30 @@ plot_df_append <- reorg_dataGCAM_data %>%
   dplyr::summarise(value = sum(value)) %>%
   ungroup()
 plot_df_append <- plot_df_append[, c(1,3,2,6,5,7,4)]
+
+# Load reference scenario
+dataGCAM_ref <- metis.readgcam(reReadData = F,  # TRUE create a .proj file
+                               scenOrigNames = 'Reference',
+                               dataProj = 'E:/NEXO-UA/Results/metis/gcam_database/outputs/dataProj_gcam5p3_HadGEM2-ES_rcp8p5.proj',
+                               regionsSelect = regionsSelect_i,
+                               paramsSelect = paramsSelect_i)
+reorg_dataGCAM_ref <- dataGCAM_ref$data %>%
+  dplyr::rename(year = x) %>%
+  dplyr::rename(Units = units) %>%
+  dplyr::group_by(scenario, region, year, param, Units) %>%
+  dplyr::summarise(value = sum(value)) %>%
+  ungroup()
+# Calculate net investment or GW by substracting value from Reference scenario
+plot_df_append <- plot_df_append %>%
+  left_join(reorg_dataGCAM_ref,
+            by = c('region', 'param', 'Units', 'year'),
+            suffix = c('.exp', '.ref')) %>%
+  mutate(value = value.exp - value.ref) %>%
+  dplyr::rename(scenario = scenario.exp) %>%
+  dplyr::select(-value.exp, -value.ref, -scenario.ref)
+
 plot_df <- rbind(plot_df, plot_df_append)
-plot_df <- plot_df %>% 
+plot_df <- plot_df %>%
   mutate(Units = ifelse(grepl('Cum', param), paste0('Cum ', Units), Units))
 
 
@@ -730,7 +862,7 @@ for(paramSelect in params){
     gray_ribbon = TRUE,
     distribution = TRUE
   )
-  
+
   df_cart <- plot_df_sub %>%
     mutate(old_scen_name = scenario,
            Metric = strsplit(y_lbl, '\\(|\\)')[[1]][1],
@@ -740,8 +872,9 @@ for(paramSelect in params){
 }
 
 
-
-# Electrification and Alternative Fuels --------------------------------
+# --------------------------------------------------------------------------
+# 5. Electrification and Alternative Fuels
+# --------------------------------------------------------------------------
 
 qry <- "final energy consumption by sector and fuel.proj"
 prj_path <- paste0(base_dir, qry)
@@ -760,13 +893,13 @@ ElecFinalEneFuel <- FinalEneFuel %>%
   dplyr::summarise(value = sum(value))
 
 ElecPctFinalEneFuel <- ElecFinalEneFuel %>%
-  left_join(TotalFinalEneFuel, by = c("scenario", "region", "Units", "year", "experiment", "old_scen_name"), 
+  left_join(TotalFinalEneFuel, by = c("scenario", "region", "Units", "year", "experiment", "old_scen_name"),
             suffix = c(".elec", ".total")) %>%
   mutate(value = value.elec / value.total * 100,
          Units = "%",
          Metric = "Electricity Share of Final Energy") %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
-  
+
 ## Hydrogen percentage of final energy
 HydrogenFinalEneFuel <- FinalEneFuel %>%
   filter(input == "hydrogen") %>%
@@ -774,7 +907,7 @@ HydrogenFinalEneFuel <- FinalEneFuel %>%
   dplyr::summarise(value = sum(value))
 
 HydrogenPctFinalEneFuel <- HydrogenFinalEneFuel %>%
-  left_join(TotalFinalEneFuel, by = c("scenario", "region", "Units", "year", "experiment", "old_scen_name"), 
+  left_join(TotalFinalEneFuel, by = c("scenario", "region", "Units", "year", "experiment", "old_scen_name"),
             suffix = c(".hydrogen", ".total")) %>%
   mutate(value = value.hydrogen / value.total * 100,
          Units = "%",
@@ -784,51 +917,51 @@ HydrogenPctFinalEneFuel <- HydrogenFinalEneFuel %>%
 ## Bioenergy percentage of final energy
 ## Biomass Final Energy in the form of Liquids, Electricity, Gas, and Biomass
 
-BioFinalEne_liq <- FinalEneFuel %>% 
-  filter(input %in% 'refined liquids') %>% 
-  group_by(scenario, region, Units, year, experiment, old_scen_name) %>% 
-  dplyr::summarise(value = sum(value)) %>% 
+BioFinalEne_liq <- FinalEneFuel %>%
+  filter(input %in% 'refined liquids') %>%
+  group_by(scenario, region, Units, year, experiment, old_scen_name) %>%
+  dplyr::summarise(value = sum(value)) %>%
   left_join(biomass_liq_ratio,
             by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year'),
-            suffix = c('.total', '.ratio')) %>% 
-  mutate(value = value.ratio * value.total) %>% 
+            suffix = c('.total', '.ratio')) %>%
+  mutate(value = value.ratio * value.total) %>%
   select(-value.ratio, -value.total)
-BioFinalEne_elec <- FinalEneFuel %>% 
-  filter(input %in% 'electricity') %>% 
-  group_by(scenario, region, Units, year, experiment, old_scen_name) %>% 
-  dplyr::summarise(value = sum(value)) %>% 
+BioFinalEne_elec <- FinalEneFuel %>%
+  filter(input %in% 'electricity') %>%
+  group_by(scenario, region, Units, year, experiment, old_scen_name) %>%
+  dplyr::summarise(value = sum(value)) %>%
   left_join(biomass_elec_ratio,
             by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year'),
-            suffix = c('.total', '.ratio')) %>% 
-  mutate(value = value.ratio * value.total) %>% 
+            suffix = c('.total', '.ratio')) %>%
+  mutate(value = value.ratio * value.total) %>%
   select(-value.ratio, -value.total)
 BioFinalEne_gas <- FinalEneFuel %>%
-  filter(input %in% 'gas') %>% 
-  group_by(scenario, region, Units, year, experiment, old_scen_name) %>% 
-  dplyr::summarise(value = sum(value)) %>% 
+  filter(input %in% 'gas') %>%
+  group_by(scenario, region, Units, year, experiment, old_scen_name) %>%
+  dplyr::summarise(value = sum(value)) %>%
   left_join(biomass_gas_ratio,
             by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year'),
-            suffix = c('.total', '.ratio')) %>% 
-  mutate(value = value.ratio * value.total) %>% 
+            suffix = c('.total', '.ratio')) %>%
+  mutate(value = value.ratio * value.total) %>%
   select(-value.ratio, -value.total)
 BioFinalEne_biomass <- FinalEneFuel %>%
-  filter(input %in% 'biomass') %>% 
-  group_by(scenario, region, Units, year, experiment, old_scen_name) %>% 
+  filter(input %in% 'biomass') %>%
+  group_by(scenario, region, Units, year, experiment, old_scen_name) %>%
   dplyr::summarise(value = sum(value))
 
 
 ### Calculate the biofuels as a proportion of transportation energy consumption (%)
 BiomassFinalEne <- Reduce(function(...)
   left_join(..., by = c('scenario', 'region', 'experiment', 'old_scen_name', 'year')),
-  list(BioFinalEne_liq, BioFinalEne_elec, BioFinalEne_gas, BioFinalEne_biomass, TotalFinalEneFuel)) %>% 
+  list(BioFinalEne_liq, BioFinalEne_elec, BioFinalEne_gas, BioFinalEne_biomass, TotalFinalEneFuel)) %>%
   dplyr::rename(bio_liq = value.x,
          bio_elec = value.y,
          bio_gas = value.x.x,
          bio_final = value.y.y,
-         total_final = value) %>% 
+         total_final = value) %>%
   mutate(value = (bio_liq + bio_elec + bio_gas + bio_final)/total_final * 100,
          Metric = 'Bioenergy Share of Final Energy',
-         Units = '%') %>% 
+         Units = '%') %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
 
 
@@ -866,7 +999,9 @@ for(i in seq(length(unique(Metrics$Metric)))){
   }
 
 
-# Global Oil & Gas Price -----------------------------------------------
+# --------------------------------------------------------------------------
+# 6. Global Oil & Gas Price
+# --------------------------------------------------------------------------
 
 ## Global oil price
 oilprice2020 <- PriceAllMarkets %>%
@@ -877,7 +1012,7 @@ oilprice <- PriceAllMarkets %>%
   filter(market %in% c("globalcrude oil")) %>%
   group_by(scenario, region, experiment, old_scen_name, year) %>%
   dplyr::summarise(value = sum(value)) %>%
-  left_join(oilprice2020, by = c("scenario", "region", "experiment", "old_scen_name")) %>% 
+  left_join(oilprice2020, by = c("scenario", "region", "experiment", "old_scen_name")) %>%
   mutate(value = ((value.x - value.y) / value.y) + 1, Units = "2020 Reference",
          Metric = "Global Oil Price", value.x = NULL, value.y = NULL)
 
@@ -890,7 +1025,7 @@ ngprice <- PriceAllMarkets %>%
   filter(market %in% c("globalnatural gas")) %>%
   group_by(scenario, region, experiment, old_scen_name, year) %>%
   dplyr::summarise(value = sum(value)) %>%
-  left_join(ngprice2020, by = c("scenario", "region", "experiment", "old_scen_name")) %>% 
+  left_join(ngprice2020, by = c("scenario", "region", "experiment", "old_scen_name")) %>%
   mutate(value = ((value.x - value.y) / value.y) + 1, Units = "2020 Reference",
          Metric = "Global Natural Gas Price", value.x = NULL, value.y = NULL)
 
@@ -917,7 +1052,7 @@ gas <- PriEne %>%
   mutate(Units = "EJ",
          Metric = "Gas Primary Energy Consumption")%>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
-gasp <- gas %>% 
+gasp <- gas %>%
   left_join(all, by = c("scenario", "region", "experiment", "old_scen_name", "year")) %>%
   mutate(value = (value.x / value.y) * 100, Units = "%", value.x = NULL, value.y = NULL,
          Units.x = NULL, Units.y = NULL, Metric = "Gas Primary Energy Consumption") %>%
@@ -925,20 +1060,20 @@ gasp <- gas %>%
 
 
 ## Global oil consumption
-## Global natural gas 
+## Global natural gas
 qry <- "demand of all markets.proj"
 prj_path <- paste0(base_dir, qry)
 prj <- loadProject(prj_path)
 
 DemandAllMarkets <- prj$data$`demand of all markets`
 
-GlobalOil <- DemandAllMarkets %>% 
-  filter(market %in% 'globalcrude oil') %>% 
-  mutate(Metric = 'Global Oil Consumption') %>% 
+GlobalOil <- DemandAllMarkets %>%
+  filter(market %in% 'globalcrude oil') %>%
+  mutate(Metric = 'Global Oil Consumption') %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
-GlobalNG <- DemandAllMarkets %>% 
-  filter(market %in% 'globalnatural gas') %>% 
-  mutate(Metric = 'Global Natural Gas Consumption') %>% 
+GlobalNG <- DemandAllMarkets %>%
+  filter(market %in% 'globalnatural gas') %>%
+  mutate(Metric = 'Global Natural Gas Consumption') %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
 
 Metrics <- rbind(as_tibble(oilprice),
@@ -1288,3 +1423,158 @@ for(i in seq(length(unique(Metrics$Metric)))){
     distribution = TRUE
   )
 }
+
+
+# VALUE OF AG PRODUCTION AND EXPORTS --------------------------------------
+
+
+biomass_exports <- getQuery(prj, "Crop exports") %>%
+  filter(grepl("biomass", sector))
+biomass_imports_domestic <- getQuery(prj, "Quantity available for crop commodity demand (domestic and imported)") %>%
+  filter(grepl("biomass", sector))
+
+exports <- getQuery(prj, "traded ag commodity sources")
+imports_domestic <- getQuery(prj, "regional ag commodity sources")
+
+
+traded_ag_commodity_prices <- getQuery(prj, "traded ag commodity prices")
+regional_ag_commodity_prices <- getQuery(prj, "regional ag commodity price")
+crop_prices <- getQuery(prj, "ag commodity prices")
+
+biomass_commodity_prices <- getQuery(prj, "regional biomass commodity price")
+
+
+region_name <- "Colombia"
+#process biomass
+region_biomass_exports <- biomass_exports %>%
+  filter(grepl(region_name, subsector)) %>%
+  mutate(region = region_name,
+         sector = gsub("traded ", "", sector)) %>%
+  select(-input, -subsector)
+
+region_biomass_imports <- biomass_imports_domestic %>%
+  filter(grepl("imported", subsector), region == region_name) %>%
+  mutate(region = region_name,
+         sector = gsub("total ", "", sector)) %>%
+  select(-input, -subsector, -technology)
+
+region_biomass_domestic <- biomass_imports_domestic %>%
+  filter(grepl("domestic", subsector), region == region_name) %>%
+  mutate(region = region_name,
+         sector = gsub("total ", "", sector)) %>%
+  select(-input, -subsector, -technology)
+
+#combine biomass with the rest of crop and livestock
+region_exports <- exports %>%
+  filter(grepl(region_name, subsector)) %>%
+  mutate(region = region_name,
+         sector = gsub("traded ", "", sector)) %>%
+  mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
+  select(-input, -subsector) %>%
+  bind_rows(region_biomass_exports)
+
+region_imports <- imports_domestic %>%
+  filter(grepl("imported", subsector), region == region_name) %>%
+  mutate(sector = gsub("regional ", "", sector)) %>%
+  mutate(sector = gsub("total ", "", sector)) %>%
+  mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
+  select(-subsector, -input) %>%
+  bind_rows(region_biomass_imports)
+
+region_domestic <- imports_domestic %>%
+  filter(grepl("domestic", subsector), region == region_name) %>%
+  mutate(sector = gsub("regional ", "", sector)) %>%
+  mutate(sector = gsub("total", "", sector)) %>%
+  mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
+  select(-subsector, -input) %>%
+  bind_rows(region_biomass_domestic)
+
+#prices
+region_domestic_biomass_prices <- biomass_commodity_prices %>%
+  filter(subsector == "domestic biomass", region == region_name) %>%
+  mutate(sector = gsub("total ", "", sector)) %>%
+  select(-subsector)
+
+region_imported_biomass_prices <- biomass_commodity_prices %>%
+  filter(subsector == "imported biomass", region == region_name) %>%
+  mutate(sector = gsub("total ", "", sector)) %>%
+  select(-subsector)
+
+region_domestic_prices <- regional_ag_commodity_prices %>%
+  filter(grepl("domestic ", subsector), region == region_name) %>%
+  mutate(sector = gsub("regional ", "", sector)) %>%
+  mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
+  select(-subsector) %>%
+  bind_rows(region_domestic_biomass_prices) %>%
+  rename(price.domestic = value)
+
+region_import_prices <- regional_ag_commodity_prices %>%
+  filter(grepl("imported ", subsector), region == region_name) %>%
+  mutate(sector = gsub("regional ", "", sector)) %>%
+  mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
+  select(-subsector) %>%
+  bind_rows(region_imported_biomass_prices) %>%
+  rename(price.imports = value)
+
+region_export_prices <- traded_ag_commodity_prices %>%
+  filter(grepl(region_name, subsector),
+         grepl("traded ", subsector)) %>%
+  mutate(region = region_name) %>%
+  mutate(sector = gsub("traded ", "", sector)) %>%
+  mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
+  select(-subsector) %>%
+  rename(price.exports = value)
+
+
+#Combine region's imports, exports, and calculate net trade volume by commodity
+region_net_trade_volume <- region_imports %>%
+  full_join(region_exports, by = c("region", "Units", "scenario", "sector", "year"), suffix = c(".imports", ".exports")) %>%
+  filter(year %in% c(seq(2015, 2050, 5))) %>%
+  #Imports are negative, exports are positive
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%
+  mutate(value.imports = value.imports * -1,
+         value.exports = if_else(is.na(value.exports), 0, value.exports),
+         value.net = value.exports + value.imports)
+
+#value of net trade by commodity
+region_net_trade_value <- region_net_trade_volume %>%
+  left_join(region_import_prices, by = c("scenario", "region", "sector", "year")) %>%
+  select(-Units.x, -Units.y) %>%
+  left_join(region_export_prices, by = c("scenario", "region", "sector", "year")) %>%
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%
+  mutate(value.imports = value.imports * price.imports * 10^9 * 3.5,
+         value.exports = value.exports * price.exports * 10^9 * 3.5) %>%
+  mutate(value.net = value.exports + value.imports,
+         Units = "2015$")
+
+#total value of net trade
+region_total_net_trade_value <- region_net_trade_value %>%
+  group_by(scenario, region, year, Units) %>%
+  summarise_at( c("value.imports", "value.exports", "value.net"), sum)
+
+#value of domestic commodity
+region_domestic_value <- region_domestic %>%
+  filter(year %in% c(seq(2015, 2050, 5))) %>%
+  left_join(region_domestic_prices, by = c("scenario", "region", "sector", "year")) %>%
+  mutate(value.domestic = value * price.domestic * 10^9 * 3.5,
+         Units = "2015$") %>%
+  select(-Units.x, -Units.y, -value)
+
+#total value of domestic commodities
+region_total_domestic_value <- region_domestic_value %>%
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%
+  group_by(scenario, region, year, Units) %>%
+  dplyr::summarise(value.domestic = sum(value.domestic))
+
+#value of production by commodity
+region_production_value <- region_domestic_value %>%
+  full_join(region_net_trade_value, by = c("scenario", "region", "sector", "year", "Units")) %>%
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%
+  mutate(value.production = value.domestic + value.exports)
+
+#total value of production
+region_total_production_value <- region_production_value %>%
+  group_by(scenario, region, year, Units) %>%
+  dplyr::summarise(value.production = sum(value.production))
+# Save all environmental data for post processing
+save.image(file='E:/NEXO-UA/Results/RDM_Colombia/runs_512_02_08_2021/runs_512_01_08_2021.RData')

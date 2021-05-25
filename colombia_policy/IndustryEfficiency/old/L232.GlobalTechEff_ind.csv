@@ -1,4 +1,4 @@
-# For industry sector, the efficiency values from A32.globaltech_eff are interpolated into all base years and future years
+# For industry sector, the efficiency values from A32.globaltech_eff are interpolated into all base years and future years,,,,
 sector.name,subsector.name,technology,year,minicam.energy.input,efficiency
 industrial energy use,biomass,biomass,1975,delivered biomass,0.753
 industrial energy use,biomass,biomass,1990,delivered biomass,0.776

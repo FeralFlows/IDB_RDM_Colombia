@@ -6,6 +6,7 @@ library(dplyr)
 library(tidyr)
 library(foreach)
 library(gcamdata)
+library(data.table)
 
 
 # This script creates a single .csv file to increase industrial efficiency. It applies a simple function that improves
@@ -13,11 +14,48 @@ library(gcamdata)
 # the GCAM model interface to create a XML file. Need to figure out if these xml files can actually be kept separate,
 # in which case we can automate the XML creation process
 
-base_directory <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/colombia_policy/IndustryEfficiency/')
+# base_directory <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/colombia_policy/IndustryEfficiency/')
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+base_directory <- getwd()
+
+# Create base data from L232.GlobalTechEff_ind.csv and L232.StubTechCoef_industry.csv
+# Both raw data can be found in gcam-core-gcam-v5.3\input\gcamdata\outputs
+# Use this step to update IndustrialStubTechEff_Base.csv if there is new versions of GCAM and gcamdata
+rebuild_Base <- FALSE
+if(rebuild_Base){
+  L232.GlobalTechEff <- data.table::fread('L232.GlobalTechEff_ind.csv')
+  L232.StubTechCoef <- data.table::fread('L232.StubTechCoef_industry.csv')
+  col_names <- names(L232.StubTechCoef)
+  
+  ind_energy_eff <- L232.GlobalTechEff %>% 
+    dplyr::filter(sector.name %in% 'industrial energy use', !subsector.name %in% 'district heat') %>% 
+    dplyr::rename(supplysector = sector.name,
+                  subsector = subsector.name,
+                  stub.technology = technology,
+                  period = year) %>% 
+    dplyr::mutate(region = 'Colombia',
+                  market.name = 'Colombia')
+  col_order <- c('region', 'supplysector', 'subsector', 'stub.technology', 'period', 'minicam.energy.input', 'efficiency', 'market.name')
+  data.table::setcolorder(ind_energy_eff, col_order)
+  
+  write(c('INPUT_TABLE,,,,,,,',
+          'Variable ID,,,,,,,',
+          'StubTechEff,,,,,,,',
+          ',,,,,,,'),
+        file = 'IndustrialStubTechEff_Base.csv')
+  write.table(x = ind_energy_eff,
+              file = 'IndustrialStubTechEff_Base.csv', 
+              row.names=FALSE,
+              sep = ',',
+              append=TRUE,
+              quote=FALSE)
+
+}
+
 
 # Read in base data (taken from Gcam data system after building). We will modify the efficiencies in the base data to
 # create a new set of assumptions and associated file.
-data <- read.csv(paste0(base_directory,'IndustrialStubTechEff_Base.csv'), skip=4)
+data <- read.csv(paste0(base_directory,'/IndustrialStubTechEff_Base.csv'), skip=4)
 
 # Rate of increase per year of efficiency improvement. Begins at 30% in 2030 and continues to 2030. 
 # Will backcast to 2020 from 2030, and project from 2030 to 2050.
@@ -43,7 +81,7 @@ output <- data %>%
 output <- output[desired_output_column_order]  # Reorder coluns to order required by header
 
 # Write top column labels required as proper formatting to create XML
-output_file <- paste0(base_directory, 'IndustrialStubTechEff.csv')
+output_file <- paste0(base_directory, '/IndustrialStubTechEff_High.csv')
 if(file.exists(output_file)){
   file.remove(output_file)
 }
@@ -84,10 +122,11 @@ write.table(output, output_file,
 
 # Auto-produce XML from CSV
 gcamdata_variable <- "StubTechEff" #  "AgProdChange"
-imported_data <- tibble::as.tibble(read.csv(output_file, skip = 4, stringsAsFactors = F)) %>% 
+imported_data <- tibble::as_tibble(read.csv(output_file, skip = 4, stringsAsFactors = F)) %>% 
   rename(year=period)
-xmlpath <- paste0(base_directory, 'IndustrialStubTechEff.xml')
-mi_header <- 'C:/Users/twild/Downloads/gcam-v5.1.3-Windows-Release-Package/input/gcamdata/inst/extdata/mi_headers/ModelInterface_headers.txt'
+xmlpath <- paste0(base_directory, '/Strategy_2_High_IndEE.xml') # old name IndustrialStubTechEff_High.xml
+# mi_header <- 'C:/Users/twild/Downloads/gcam-v5.1.3-Windows-Release-Package/input/gcamdata/inst/extdata/mi_headers/ModelInterface_headers.txt'
+mi_header <- 'E:/NEXO-UA/Github/IDB_RDM_Colombia/colombia_policy/headers_rdm.txt'
 
 gcamdata::create_xml(xmlpath, mi_header = mi_header) %>%
   gcamdata::add_xml_data(imported_data, gcamdata_variable) %>%
