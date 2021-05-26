@@ -16,7 +16,7 @@ echo 'Library config:'
 echo "SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
 ldd ./gcam.exe
 
-FILES=(/qfs/people/wild566/IDB/Final/gcam-core/exe/RDM/UncertainFactorsXML/RDM_DDP_XL/*)
+FILES=(/qfs/people/wild566/IDB/Final/gcam-core/exe/RDM/UncertainFactorsXML/RDM_DDP_XL/*.csv)
 NEW_TASK_ID=$(($1+$SLURM_ARRAY_TASK_ID-1))
 FILE_INDEX=$((NEW_TASK_ID-1))
 FILE=${FILES[$FILE_INDEX]}
