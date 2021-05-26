@@ -102,7 +102,7 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
                     factor_levels_list[exp][fac_num]
                 DOE_DF.iloc[scenario_counter * num_experiments + exp].experiment = exp
         # Save XLRM Design of Experiment sheet
-        DOE_DF.to_csv(base_dir + 'uncertainty/' + 'DOE_XLRM_' + gcam_scen + '.csv', index=False)
+        DOE_DF.to_csv(os.path.join(output_dir, 'doe', 'DOE_XLRM_' + gcam_scen + '.csv'), index=False)
         scenario_counter += 1
         # convert list of tuples to list of lists
         for tup in range(len(factor_file_list_orig)):
@@ -132,7 +132,7 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
                 factor_file_list_orig2[row][column].attrib = {'name':'uncertainty_combination_elem'+str(column)}
                 factor_file_list_orig2[row][column].text = factor_file_list_orig[row][column] # + '\n'
             root[0][4].text = '../../output/FinalRuns/IDB_RDM/uncertainty_' + scen  # Change output database location
-            xml_text = os.path.join(output_dir, 'RDM_' + gcam_scen + '_' + scen + '.xml')
+            xml_text = os.path.join(output_dir, 'xml', 'RDM_' + gcam_scen + '_' + scen + '.xml')
             # parser = etree.XMLParser(remove_blank_text=True)
             indent(root)
             tree.write(xml_text)  # , pretty_print = True
