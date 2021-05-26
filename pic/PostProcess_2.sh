@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH -A stranded
-#SBATCH -t 720
-#SBATCH --output=./stdio/%A.%a.out
-#SBATCH --array=1-35
+#SBATCH -A br21_wild566
+#SBATCH -t 179
+#SBATCH --output=./stdio/RDM_DDP_XL/PostProc/%A.%a.out
+#SBATCH --array=1-67
 #SBATCH -N 1
  
 #module load git
