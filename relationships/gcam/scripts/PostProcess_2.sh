@@ -2,7 +2,7 @@
 #SBATCH -A br21_wild566
 #SBATCH -t 179
 #SBATCH --output=./stdio/RDM_DDP_XL/PostProc/%A.%a.out
-#SBATCH --array=1-67
+#SBATCH --array=1-26
 #SBATCH -N 1
  
 #module load git
