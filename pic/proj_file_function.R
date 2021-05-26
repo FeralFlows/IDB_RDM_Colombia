@@ -3,6 +3,7 @@ library(tibble)
 library(dplyr)
 library(tidyr)
 library(data.table)
+options("rgcam.saved_compressed" = FALSE)
 
 produce_query_file <- function(base_dir, output_file, proc_num=NULL, plotting_format=0, metis_format=0){
   # The purpose of this script is to parallelize (on PIC) the process of taking a file that contain outputs
@@ -56,9 +57,15 @@ produce_query_file <- function(base_dir, output_file, proc_num=NULL, plotting_fo
       reorg_prj <- list()
       for (experiment in names(prj)){
         prj_isolate_query[[experiment]] <- prj[[experiment]][[query]] %>% 
-          mutate(scenario = gsub('DDP_Delayed_EndPt', 'DelayedEndPt', scenario)) %>% 
-          mutate(scenario = gsub('DDP_Delayed_CumEmiss', 'DelayedCumEmiss', scenario)) %>% 
+#          mutate(scenario = gsub('DDP_Delayed_EndPt', 'DelayedEndPt', scenario)) %>% 
+#          mutate(scenario = gsub('DDP_Delayed_CumEmiss', 'DelayedCumEmiss', scenario)) %>% 
+          mutate(scenario = gsub('DDP_LeversTest_1', 'DDPLeversTest1', scenario)) %>% 
+          mutate(scenario = gsub('DDP_LeversTest_2', 'DDPLeversTest2', scenario)) %>% 
+          mutate(scenario = gsub('DDP_LeversTest_3', 'DDPLeversTest3', scenario)) %>% 
+          mutate(scenario = gsub('DDP_LeversTest', 'DDPLeversTest', scenario)) %>% 
+          mutate(scenario = gsub('DDP_XL', 'DDPXL', scenario)) %>% 
           mutate(experiment=substring(scenario, regexpr("_", scenario) + 1, nchar(scenario))) %>%
+#          mutate(experiment=1) %>% 
           mutate(old_scen_name=scenario) %>% 
           mutate(scenario=substring(scenario, 0, regexpr("_", scenario)-1))
       }
