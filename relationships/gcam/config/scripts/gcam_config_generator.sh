@@ -22,9 +22,9 @@ PYFILE=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/config/code/gcam_config_gener
 scenarios="['DDP_XL']"
 base_dir=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/
 base_gcam_dir=/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input
-base_config_file=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/config/input/gcam_config_base_nopolicy.xml
+base_config_file=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/config/input/gcam_config_base_nopolicy.xml
 base_alt_xml_dir=/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input/idb_5.3/rdm/XL_category_files
-output_dir=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/config/output
+output_dir=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/config/scripts/output
 
 echo "python $PYFILE $scenarios $base_dir $base_gcam_dir $base_config_file $base_alt_xml_dir $output_dir"
 python $PYFILE $scenarios $base_dir $base_gcam_dir $base_config_file $base_alt_xml_dir $output_dir
