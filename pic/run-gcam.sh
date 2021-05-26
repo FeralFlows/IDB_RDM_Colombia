@@ -5,11 +5,11 @@
  
 job=$SLURM_JOB_NAME
 
-module load git
+module load git/2.7.0
 module load svn/1.8.13
 module load R/3.4.3
 module load java/1.8.0_31
-module load gcc/8.1.0
+module load gcc/6.1.0
  
 echo 'Library config:'
 ldd ./gcam.exe
