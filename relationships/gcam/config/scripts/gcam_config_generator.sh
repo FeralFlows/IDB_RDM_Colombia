@@ -17,7 +17,7 @@ source /share/apps/python/anaconda3.6/etc/profile.d/conda.sh
 
 echo "Started at $(date)"
 
-PYFILE=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/config/code/gcam_config_generator.py
+PYFILE=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/config/code/gcam_config_generator.py
 
 scenarios="['DDP_XL']"
 base_dir=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/
