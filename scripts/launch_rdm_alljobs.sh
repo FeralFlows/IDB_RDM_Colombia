@@ -5,7 +5,9 @@
 #
 # This file executes the following steps:
 #
-# 1. Executes a script (RDM_DDP_XL.sh) separately for each batch of runs. 
+# 1. Generates GCAM configuration files.
+#
+# 2. Executes a script (RDM_DDP_XL.sh) separately for each batch of gcam runs. 
 # Users must specify size of each batch, which cannot individually exceed
 # 1000 runs. 
 #
@@ -27,7 +29,16 @@ echo "total number of GCAM runs to perform: $total_jobs"
 
 # User specify output dirs
 output_dir='05272021'
-output_path='/qfs/people/wild566/IDB/Final/gcam-core/output/FinalRuns/IDB_RDM/05272021'
+output_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/outputs/raw/05272021'
+# ensure output dir exists to avoid errors
+mkdir -p $output_path
+# path to this meta-repo
+repo_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/'
+
+# launch script to generate config files
+config_extension="relationships/gcam/config/scripts/gcam_config_generator.sh"
+config_generator_path="$repo_path$config_extension"
+jid1=$(sbatch $config_generator_path $repo_path)
 
 # PIC has a max number of job arrays, which is currently 1000
 #max_job_arrays=1000
@@ -62,13 +73,15 @@ done
 count=0
 # create associative array so each job is a variable and we can track if it's finished
 declare -A jid_a=()
+run_gcam_script="relationships/gcam/scripts/run-gcam-parallel-arrays.sh"
+run_gcam_script_path="$repo_path$run_gcam_script"
 for arr in ${job_array_upper[@]}; do
     arr_lower="1-"
     arr_upper="$arr"
     arr_string="$arr_lower$arr_upper"
     echo "sbatch --array=$arr_string RDM_DDP_XL.sh ${start_point[count]}"
-    jid_a[count]=$(sbatch --array=$arr_string RDM_DDP_XL.sh ${start_point[count]} $output_dir $output_path)
-    # sbatch --array=$arr_string RDM_DDP_XL.sh ${start_point[count]} $output_dir $output_path
+    jid_a[count]=$(sbatch --array=$arr_string $run_gcam_script_path --dependency=afterany:$jid1 ${start_point[count]} $output_dir $output_path)
+    # sbatch --array=$arr_string $run_gcam_script_path ${start_point[count]} $output_dir $output_path
 	count=$((count+1))
 done
 

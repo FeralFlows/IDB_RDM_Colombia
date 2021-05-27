@@ -29,7 +29,7 @@ def indent(elem, level=0):
 def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir, output_dir, XL_fac, XL_cat):
     ''' Generate GCAM config files for use in Scenario Discovery and RDM experiments.
     :param scenarios: list of strings of scenario names
-    :type base_dir: list of str
+    :type scenarios: list of str
     :param base_dir: path to where you cloned the IDB_RDM_Colombia repo
     :type base_dir: str
     :param base_gcam_dir: path to GCAM dir (contains /exe, /input, etc.)
@@ -46,7 +46,7 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
     for key in XL_fac:
         num_experiments *= len(XL_fac[key])
     # Read in base configuration file; get some basic details from the file
-    config_dir = os.path.join(base_dir, 'pic')
+    config_dir = os.path.join(base_dir, 'relationships', 'gcam', 'config')
     num_scenarios = len(scenarios)
     # Specify Pandas DF to store details related to design of experiment
     add_on_DF_columns = XL_fac.keys()
@@ -55,7 +55,7 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
                           index = [i for i in range(0, num_scenarios*num_experiments)])
     scenario_counter = 0  # Aids in cases where we have to handle more than one scenario.
     for gcam_scen in scenarios:
-        tree=ET.parse(config_dir + base_config_file)
+        tree=ET.parse(os.path.join(config_dir, 'input', base_config_file))
         root=tree.getroot()  # Element "Configuration" top of file
         scenComp=root.find('ScenarioComponents')  # Element "ScenarioComponents"
 
@@ -65,7 +65,6 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
         factor_levels = [[] for i in range(len(XL_fac.keys()))]
         impacts_ag_water = {}
         for key in XL_fac:
-            print(key)
             if key not in ['climate_scen']:
                 for item in XL_fac[key]:
                     factor_names[list(XL_fac.keys()).index(key)].append(key)
@@ -82,7 +81,6 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
                 for gcm in XL_fac['climate_scen']['Global_GCM']:
                     for rcp in XL_fac['climate_scen']['Global_RCP']:
                         filepath = base_gcam_dir + 'idb/impacts/Hydro/hydro_impacts_' + gcm + '_' + rcp + '.xml'
-                        print(filepath)
                         factor_files[XL_fac.keys().index(key)].append(filepath)
                         water_filepath = base_gcam_dir + 'idb/impacts/Water/runoff_impacts_' + gcm+ '_' + rcp + '.xml'
                         ag_filepath = base_gcam_dir + 'idb/impacts/Ag/ag_prodchange_' + gcm + '_' + rcp + '.xml'
@@ -143,17 +141,17 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate GCAM configuration files')
-    parser.add_argument('scenarios', metavar='scenarios', type=list,
+    parser.add_argument("--scenarios", nargs='+',
                         help='see gcam_config_generator.py main() function docstring')
-    parser.add_argument('base_dir', metavar='base_dir', type=str,
+    parser.add_argument('--base_dir', type=str,
                         help='see gcam_config_generator.py main() function docstring')
-    parser.add_argument('base_gcam_dir', metavar='base_gcam_dir', type=str,
+    parser.add_argument('--base_gcam_dir', type=str,
                         help='see gcam_config_generator.py main() function docstring')
-    parser.add_argument('base_config_file', metavar='base_config_file', type=str,
+    parser.add_argument('--base_config_file', type=str,
                         help='see gcam_config_generator.py main() function docstring')
-    parser.add_argument('base_alt_xml_dir', metavar='base_alt_xml_dir', type=str,
+    parser.add_argument('--base_alt_xml_dir',type=str,
                         help='see gcam_config_generator.py main() function docstring')
-    parser.add_argument('output_dir', metavar='output_dir', type=str,
+    parser.add_argument('--output_dir', type=str,
                         help='see gcam_config_generator.py main() function docstring')
 
     args = parser.parse_args()
@@ -195,6 +193,7 @@ if __name__ == '__main__':
               'Uncertainty_5_Low': ['Ag', 'Hydro', 'Runoff'],
               'Uncertainty_6_High': ['HOV-CL']
               }
-
+    print(args.scenarios)
+    print(type(args.scenarios))
     main(args.scenarios, args.base_dir, args.base_gcam_dir, args.base_config_file, args.base_alt_xml_dir,
-         args.output_dir, args.XL_fac, args.XL_cat)
+         args.output_dir, XL_fac, XL_cat)
