@@ -73,8 +73,8 @@ for arr in ${job_array_upper[@]}; do
 done
 
 # launch post processing
-PostProcDir=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/scripts/
+PostProcDir="/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/scripts/"
 PostProcFile="launch_post_processing.sh"
 PostProcFpath="$PostProcDir$PostProcFile"
-PostProcFn=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/outputs/code/
+PostProcFn="/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/outputs/code/"
 jid_n=$(sbatch $PostProcFpath --dependency=afterany:${jid_a[count-1]} $PostProcDir $PostProcFn)
