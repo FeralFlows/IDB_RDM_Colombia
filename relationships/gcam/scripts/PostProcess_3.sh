@@ -19,7 +19,9 @@ echo 'Running Post processing script in serial for the requisite metis queries'
 echo "Started at $(date)"
 proj_function_arg=1
 f="create_query_proj_file_metis.R"
-fpath="$1$f"
-echo "Rscript --vanilla $fpath --args $proj_function_arg"
-Rscript --vanilla $fpath --args $proj_function_arg
+PostProcFn=$1
+fpath="$PostProcFn$f"
+output_path=$2
+echo "Rscript --vanilla $fpath --args $proj_function_arg $PostProcFn $output_path"
+Rscript --vanilla $fpath --args $proj_function_arg $PostProcFn $output_path
 echo "Ended at $(date)"

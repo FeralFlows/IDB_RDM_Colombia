@@ -23,7 +23,9 @@ tid=$SLURM_ARRAY_TASK_ID
 proj_function_arg=1
 echo "My SLURM_ARRAY_TASK_ID: " $tid
 f="create_query_proj_file.R"
-fpath="$1$f"
-echo "Rscript --vanilla $fpath --args $tid $proj_function_arg"
-Rscript --vanilla $fpath --args $tid $proj_function_arg
+PostProcFn=$1
+output_path=$2
+fpath="$PostProcFn$f"
+echo "Rscript --vanilla $fpath --args $tid $proj_function_arg $PostProcFn $output_path"
+Rscript --vanilla $fpath --args $tid $proj_function_arg $PostProcFn $output_path
 echo "Ended at $(date)"
