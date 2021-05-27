@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH -A br21_wild566
 #SBATCH -t 179
-#SBATCH --output=./stdio/RDM_DDP_XL/PostProc/%A.out
+#SBATCH -p short,slurm,shared
+#SBATCH --output=./stdio/%A.out
 #SBATCH -N 1
  
 #module load git
@@ -17,7 +18,8 @@ module load intel
 echo 'Running Post processing script in serial for the requisite metis queries'
 echo "Started at $(date)"
 proj_function_arg=1
-plot_runner=create_query_proj_file_metis.R
-echo "Rscript --vanilla $plot_runner --args $proj_function_arg"
-Rscript --vanilla $plot_runner --args $proj_function_arg
+f="create_query_proj_file_metis.R"
+fpath="$1$f"
+echo "Rscript --vanilla $fpath --args $proj_function_arg"
+Rscript --vanilla $fpath --args $proj_function_arg
 echo "Ended at $(date)"
