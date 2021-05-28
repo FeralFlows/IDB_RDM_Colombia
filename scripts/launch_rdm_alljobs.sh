@@ -7,11 +7,11 @@
 #
 # 1. Generates GCAM configuration files.
 #
-# 2. Executes a script (RDM_DDP_XL.sh) separately for each batch of gcam runs. 
+# 2. Executes a script (run-gcam-parallel-arrays.sh) separately for each batch of gcam runs. 
 # Users must specify size of each batch, which cannot individually exceed
 # 1000 runs. 
 #
-# 2. Executes a post-processing launch script (launch_post_processing.sh) 
+# 3. Executes a post-processing launch script (launch_post_processing.sh) 
 # that executes a series of post-processing scripts.
 #
 # Author: Thomas B. Wild (thomas.wild@pnnl.gov)
@@ -27,27 +27,34 @@
 total_jobs=3
 echo "total number of GCAM runs to perform: $total_jobs"
 
-# User specify output dirs
+# User specify output dirs and paths
 output_dir='05272021'
 output_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/outputs/raw/05272021'
+
+# User specify path to this meta-repo
+repo_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/'
+
+# User specify scenario name
+scenario=RDM_NoPolicy
+
+# User to specify GCAM executable location.
+gcam_exe_fpath=/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/exe/
+
 # ensure output dir exists to avoid errors
 mkdir -p $output_path
-# path to this meta-repo
-repo_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/'
 
 # launch script to generate config files
 config_extension="relationships/gcam/config/scripts/gcam_config_generator.sh"
 config_generator_path="$repo_path$config_extension"
-jid1=$(sbatch $config_generator_path $repo_path)
+jid1=$(sbatch $config_generator_path $repo_path $scenario | sed 's/Submitted batch job //')
 
 # PIC has a max number of job arrays, which is currently 1000
 #max_job_arrays=1000
 max_job_arrays=2
 # Calculate the number of groups of 1000, and any remainder to be dealt with
 separate_groups=$((total_jobs/max_job_arrays))
-echo "number of groups of 1000: $separate_groups"
 remainder=$((total_jobs%max_job_arrays))
-echo "size of additional group: $remainder"
+echo "number of groups: $((separate_groups+remainder))"
 
 # Declare arrays that will store run number for each batch job
 declare -a job_array_upper
@@ -69,25 +76,15 @@ do
     count=$((count + 1))
 done
 
-# launch individual batches
+# launch individual batches of gcam runs
 count=0
-# create associative array so each job is a variable and we can track if it's finished
-declare -A jid_a=()
 run_gcam_script="relationships/gcam/scripts/run-gcam-parallel-arrays.sh"
 run_gcam_script_path="$repo_path$run_gcam_script"
 for arr in ${job_array_upper[@]}; do
     arr_lower="1-"
     arr_upper="$arr"
     arr_string="$arr_lower$arr_upper"
-    echo "sbatch --array=$arr_string RDM_DDP_XL.sh ${start_point[count]}"
-    jid_a[count]=$(sbatch --array=$arr_string $run_gcam_script_path --dependency=afterany:$jid1 ${start_point[count]} $output_dir $output_path)
-    # sbatch --array=$arr_string $run_gcam_script_path ${start_point[count]} $output_dir $output_path
-	count=$((count+1))
+    echo "sbatch --array=$arr_string --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_dir $output_path $scenario $gcam_exe_fpath"
+    sbatch --array=$arr_string --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_dir $output_path $scenario $gcam_exe_fpath
+    count=$((count+1))
 done
-
-# launch post processing
-PostProcDir="/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/scripts/"
-PostProcFile="launch_post_processing.sh"
-PostProcFpath="$PostProcDir$PostProcFile"
-PostProcFn="/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/outputs/code/"
-jid_n=$(sbatch $PostProcFpath --dependency=afterany:${jid_a[count-1]} $PostProcDir $PostProcFn)
