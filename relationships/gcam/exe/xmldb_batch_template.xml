@@ -1,8 +1,8 @@
 <ModelInterfaceBatch>
     <class name="ModelInterface.ModelGUI2.DbViewer">
         <command name="XMLDB Batch File">
-            <queryFile>rdm_queries_reduced.xml</queryFile>
-            <outFile>../output/FinalRuns/IDB_RDM/__OUTPUT_NAME__</outFile>
+            <queryFile>/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/exe/rdm_queries_reduced.xml</queryFile>
+            <outFile>__OUTPUT_NAME__</outFile>
             <!-- Below DB location gets ignored when using in memory DBs as we are doing -->
             <xmldbLocation>../output/FinalRuns/IDB_RDM</xmldbLocation>
 			<!-- Additional query options which will be ignored when saving to CSV -->
