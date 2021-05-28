@@ -2,8 +2,8 @@
 #SBATCH -A br21_wild566
 #SBATCH -t 360
 #SBATCH -p shared,slurm -N 1 --cpus-per-task 3
-#SBATCH --output=./stdio/RDM_DDP_XL/%A.%a.out
-#SBATCH --error=./stdio/RDM_DDP_XL/%A.%a.err
+#SBATCH --output=./stdout/%A.%a.out
+#SBATCH --error=./stdout/%A.%a.err
 
 module purge
 module load git
@@ -16,15 +16,21 @@ echo 'Library config:'
 echo "SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
 ldd ./gcam.exe
 
-FILES=(/qfs/people/wild566/IDB/Final/gcam-core/exe/RDM/UncertainFactorsXML/RDM_DDP_XL/*.csv)
-NEW_TASK_ID=$(($1+$SLURM_ARRAY_TASK_ID-1))
+repo_path=$1
+config_extension="relationships/gcam/config/output/xml/*.xml"
+CONFIG_FILES_PATH="$repo_path$config_extension"
+FILES=($CONFIG_FILES_PATH)
+NEW_TASK_ID=$(($2+$SLURM_ARRAY_TASK_ID-1))
 FILE_INDEX=$((NEW_TASK_ID-1))
 FILE=${FILES[$FILE_INDEX]}
 echo "Adjusted Task ID: $NEW_TASK_ID"
 echo "GCAM Config. File Index: $FILE_INDEX"
 echo "GCAM Config. File Name: $FILE"
-scenario=RDM_DDP_XL
-mkdir -p $3
-outdir="$2/"
+outdir="$3/"
+mkdir -p $4
+scenario=$5
 date
-cat xmldb_batch_template.xml | sed "s#__OUTPUT_NAME__#${outdir}${scenario}_${NEW_TASK_ID}.csv#" | ./gcam.exe -C$FILE -Llog_conf.xml
+cd $6; pres=$(pwd); echo "$pres"
+exe_extension="relationships/gcam/exe/xmldb_batch_template.xml"
+xmldb_batch="$repo_path$exe_extension"
+cat $xmldb_batch | sed "s#__OUTPUT_NAME__#${outdir}${scenario}_${NEW_TASK_ID}.csv#" | ./gcam.exe -C$FILE -Llog_conf.xml
