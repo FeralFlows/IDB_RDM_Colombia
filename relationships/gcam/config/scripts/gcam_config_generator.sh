@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH -A br21_wild566
-#SBATCH -p slurm
+#SBATCH -p short,slurm,shared
 #SBATCH -t 179
-#SBATCH -J GEXP
+#SBATCH -J config
 #SBATCH --output=./stdout/%A.out
 
 # README -----------------------------------------------------------------------
@@ -17,10 +17,10 @@ source /share/apps/python/anaconda3.6/etc/profile.d/conda.sh
 
 echo "Started at $(date)"
 repo_path=$1
+scenarios=$2
 PYFILE_EXTENSION="relationships/gcam/config/code/gcam_config_generator.py"
 PYFILE="$repo_path$PYFILE_EXTENSION"
 
-scenarios=DDP_XL
 base_dir=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/
 base_gcam_dir=/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input
 base_config_file=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/config/input/gcam_config_base_nopolicy.xml

@@ -73,7 +73,7 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
                     if key_item in XL_cat:
                         append_str = ''
                         for cat in XL_cat[key_item]:
-                            append_str += str(base_alt_xml_dir + key_item + '_' + cat + '.xml;')
+                            append_str += str(base_alt_xml_dir + '/' + key_item + '_' + cat + '.xml;')
                         factor_files[list(XL_fac.keys()).index(key)].append(append_str)
                     else:
                         factor_files[list(XL_fac.keys()).index(key)].append('')
@@ -130,7 +130,7 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
                 factor_file_list_orig2[row][column].attrib = {'name':'uncertainty_combination_elem'+str(column)}
                 factor_file_list_orig2[row][column].text = factor_file_list_orig[row][column] # + '\n'
             root[0][4].text = '../../output/FinalRuns/IDB_RDM/uncertainty_' + scen  # Change output database location
-            xml_text = os.path.join(output_dir, 'xml', 'RDM_' + gcam_scen + '_' + scen + '.xml')
+            xml_text = os.path.join(output_dir, 'xml', gcam_scen + '_' + scen + '.xml')
             # parser = etree.XMLParser(remove_blank_text=True)
             indent(root)
             tree.write(xml_text)  # , pretty_print = True
@@ -193,7 +193,5 @@ if __name__ == '__main__':
               'Uncertainty_5_Low': ['Ag', 'Hydro', 'Runoff'],
               'Uncertainty_6_High': ['HOV-CL']
               }
-    print(args.scenarios)
-    print(type(args.scenarios))
     main(args.scenarios, args.base_dir, args.base_gcam_dir, args.base_config_file, args.base_alt_xml_dir,
          args.output_dir, XL_fac, XL_cat)
