@@ -29,7 +29,7 @@ echo "total number of GCAM runs to perform: $total_jobs"
 
 # User specify output dirs and paths
 output_dir='05272021'
-output_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/outputs/raw/05272021'
+output_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/outputs/raw/05272021/'
 
 # User specify path to this meta-repo
 repo_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/'
@@ -80,11 +80,21 @@ done
 count=0
 run_gcam_script="relationships/gcam/scripts/run-gcam-parallel-arrays.sh"
 run_gcam_script_path="$repo_path$run_gcam_script"
+jid_str=""
 for arr in ${job_array_upper[@]}; do
     arr_lower="1-"
     arr_upper="$arr"
     arr_string="$arr_lower$arr_upper"
     echo "sbatch --array=$arr_string --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_dir $output_path $scenario $gcam_exe_fpath"
-    sbatch --array=$arr_string --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_dir $output_path $scenario $gcam_exe_fpath
+    jid_n=$(sbatch --array=$arr_string --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_dir $output_path $scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
+    jid_str="$jid_str:$jid_n"
     count=$((count+1))
 done
+
+# launch post processing
+PostProcDir="/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/scripts/"
+PostProcFile="launch_post_processing.sh"
+PostProcFpath="$PostProcDir$PostProcFile"
+PostProcFn="/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/outputs/code/"
+echo "sh $PostProcFpath $PostProcDir $PostProcFn $jid_str"
+sh $PostProcFpath $PostProcDir $PostProcFn $jid_str

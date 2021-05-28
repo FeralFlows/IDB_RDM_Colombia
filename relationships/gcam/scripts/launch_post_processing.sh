@@ -30,14 +30,14 @@ output_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/outp
 echo 'Launching first post-processing script'
 f1="PostProcess_1.sh"
 fpath1="$1$f1"
-jid1=$(sbatch $fpath1 $2 $output_path)
+jid1=$(sbatch --dependency=afterany$3 $fpath1 $2 $output_path | sed 's/Submitted batch job //')
 
 echo 'Launching second post-processing script'
 f2="PostProcess_2.sh"
 fpath2="$1$f2"
-jid2=$(sbatch $fpath2 --dependency=afterany:$jid1 $2 $output_path)
+jid2=$(sbatch --dependency=afterany:$jid1 $fpath2 $2 $output_path | sed 's/Submitted batch job //')
 
 echo 'Launhcing third post-processing script'
 f3="PostProcess_3.sh"
 fpath3="$1$f3"
-jid3=$(sbatch $fpath3 --dependency=afterany:$jid2 $2 $output_path)
+jid3=$(sbatch --dependency=afterany:$jid2 $fpath3 $2 $output_path)
