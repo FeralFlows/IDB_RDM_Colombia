@@ -2,7 +2,7 @@
 # Colombia Robust Decisohn Making                                              #
 # Author: Mengqi Zhao                                                          #
 # Email: mengqiz@umd.edu                                                       #
-# Last Update: 2021-01-01                                                      #  
+# Last Update: 2021-05-28                                                      #  
 ################################################################################
 
 if("rpart" %in% rownames(installed.packages()) == F){install.packages("rpart")}
@@ -18,11 +18,7 @@ library(tidyverse)
 if("stringr" %in% rownames(installed.packages()) == F){install.packages("stringr")}
 library(stringr)
 
-rdm_cart <- function(Metrics){
-  exp <- data.table::fread(paste(getwd(), 'query_proj', "DOE_XLRM_DDP_XL.csv", sep='/'), header = TRUE)
-  exp <- exp %>% 
-    mutate(scenario = str_replace(scenario, '_', '')) %>% 
-    mutate(experiment = as.character(experiment))
+rdm_cart <- function(Metrics, exp, export_dir){
   
   cart <- as_tibble(Metrics) %>% 
     left_join(exp, by = c('experiment', 'scenario')) %>% 
@@ -73,8 +69,8 @@ rdm_cart <- function(Metrics){
   title <- paste('Metric: ', unique(Metrics$Metric), ' (', unique(Metrics$Units), ') in 2050', sep = '')
   save_title <- paste('Metric', unique(Metrics$Metric), sep = '-')
   
-  save_folder <- 'output_cart_2050'
-  save_path <- paste(getwd(), save_folder, sep  = '/')
+  save_folder <- 'cart'
+  save_path <- file.path(export_dir, save_folder)
   if(!file.exists(save_path)){
     dir.create(save_path)
   }
