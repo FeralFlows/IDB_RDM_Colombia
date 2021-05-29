@@ -1,9 +1,9 @@
 #!/usr/bin/env Rscript
 args <- commandArgs(trailingOnly = TRUE)
+run_name <- args[0] # Tom please change the args[??] to reflect command_line inputs
+scenario_name <- args[1] # Tom please change the args[??] to reflect command_line inputs
 
 # Install and load packages -----------------------------------------------
-
-rm(list=ls())
 
 if('tibble' %in% rownames(installed.packages()) == F){install.packages('tibble')}
 library(tibble)
@@ -31,8 +31,6 @@ library(metis)
 # Set directories, load extra files ---------------------------------------
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 metrics_folder <- getwd()
-run_name <- args[0] # Tom please change the args[??] to reflect command_line inputs
-scenario_name <- args[1] # Tom please change the args[??] to reflect command_line inputs
 gcam_dir <- file.path('..', 'relationships', 'gcam')
 
 base_dir <- file.path(gcam_dir, 'outputs', 'post_processed', run_name)
