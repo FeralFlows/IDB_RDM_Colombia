@@ -14,6 +14,9 @@ module load gcc/8.1.0
 echo 'Running Post processing script in serial'
 f="create_proj_file.R"
 fpath="$1$f"
-echo "Rscript --vanilla $fpath --args $2"
-Rscript --vanilla $fpath --args $2
+raw_outpath=$2
+post_proc_outpath=$3
+
+echo "Rscript --vanilla $fpath --args $raw_outpath $post_proc_outpath"
+Rscript --vanilla $fpath --args $raw_outpath $post_proc_outpath
 echo "Ended at $(date)"

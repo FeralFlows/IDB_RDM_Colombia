@@ -7,7 +7,10 @@
 # steps has its own associated shell script that this meta-script launches. Each
 # successive script can only be launched when the previous script is completed,
 # so we use dependencies to ensure each step is completed before the next step can
-# proceed.
+# proceed. This series of scripts is not designed to handle GCAM DBs, only .csv files.
+# The user should not need to run this script by itself--ideally this script should
+# be executed as part of a bigger pipeline being run from launch_rdm_alljobs.sh or
+# similar.
 #
 # Author: Thomas B. Wild (thomas.wild@pnnl.gov)
 #
@@ -23,21 +26,37 @@ module load R/3.4.3
 module load java/1.8.0_31
 module load gcc/8.1.0
 
-# User-specified location of output (.csv) files containing GCAM query results.
-# This series of scripts is not designed to handle GCAM DBs, only .csv files.
-output_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/outputs/raw/05272021/'
+# Identify input and output file locations and ensure output dirs exist
+output_sub_dir=$4
+gcam_meta_scenario=$5
+repo_path=$6
+raw_outpath="${repo_path}relationships/gcam/output/raw/${gcam_meta_scenario}/${output_sub_dir}/"
+post_proc_outpath="${repo_path}relationships/gcam/output/post_processed/${gcam_meta_scenario}/${output_sub_dir}/"
+# ensure post-processing output dir exists to avoid errors
+mkdir -p $post_proc_outpath
+PostProcFn=$2
+gcam_dependencies=$3
+
+# Launch series of three dependent post-processing scripts
 
 echo 'Launching first post-processing script'
 f1="PostProcess_1.sh"
 fpath1="$1$f1"
-jid1=$(sbatch --dependency=afterany$3 $fpath1 $2 $output_path | sed 's/Submitted batch job //')
+if [[ $gcam_dependencies == "None" ]]; then
+    echo "no GCAM run dependencies exist, beginning post-processing"
+    jid1=$(sbatch $fpath1 $PostProcFn $raw_outpath $post_proc_outpath | sed 's/Submitted batch job //')
+else
+    echo "GCAM run dependencies exist, waiting to conduct post-processing"
+    echo "$gcam_dependencies"
+    jid1=$(sbatch --dependency=afterany$gcam_dependencies $fpath1 $PostProcFn $raw_outpath $post_proc_outpath | sed 's/Submitted batch job //')
+fi
 
 echo 'Launching second post-processing script'
 f2="PostProcess_2.sh"
 fpath2="$1$f2"
-jid2=$(sbatch --dependency=afterany:$jid1 $fpath2 $2 $output_path | sed 's/Submitted batch job //')
+jid2=$(sbatch --dependency=afterany:$jid1 $fpath2 $PostProcFn $post_proc_outpath | sed 's/Submitted batch job //')
 
 echo 'Launhcing third post-processing script'
 f3="PostProcess_3.sh"
 fpath3="$1$f3"
-jid3=$(sbatch --dependency=afterany:$jid2 $fpath3 $2 $output_path)
+jid3=$(sbatch --dependency=afterany:$jid2 $fpath3 $PostProcFn $post_proc_outpath)

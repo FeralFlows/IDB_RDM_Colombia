@@ -2,7 +2,7 @@
 #SBATCH -A br21_wild566
 #SBATCH -t 179
 #SBATCH -p short,slurm,shared
-#SBATCH --output=./stdio/%A.out
+#SBATCH --output=./stdout/%A.out
 #SBATCH -N 1
  
 #module load git
@@ -21,7 +21,7 @@ proj_function_arg=1
 f="create_query_proj_file_metis.R"
 PostProcFn=$1
 fpath="$PostProcFn$f"
-output_path=$2
-echo "Rscript --vanilla $fpath --args $proj_function_arg $PostProcFn $output_path"
-Rscript --vanilla $fpath --args $proj_function_arg $PostProcFn $output_path
+post_proc_outpath=$2
+echo "Rscript --vanilla $fpath --args $proj_function_arg $PostProcFn $post_proc_outpath"
+Rscript --vanilla $fpath --args $proj_function_arg $PostProcFn $post_proc_outpath
 echo "Ended at $(date)"

@@ -16,25 +16,36 @@ echo 'Library config:'
 echo "SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
 ldd ./gcam.exe
 
+# Identify GCAM config files for which GCAM runs will be performed
 repo_path=$1
 config_extension="relationships/gcam/config/output/xml/*.xml"
 CONFIG_FILES_PATH="$repo_path$config_extension"
 FILES=($CONFIG_FILES_PATH)
+
+# Assign task IDs for individual GCAM runs
 NEW_TASK_ID=$(($2+$SLURM_ARRAY_TASK_ID-1))
 FILE_INDEX=$((NEW_TASK_ID-1))
 FILE=${FILES[$FILE_INDEX]}
 echo "Adjusted Task ID: $NEW_TASK_ID"
 echo "GCAM Config. File Index: $FILE_INDEX"
 echo "GCAM Config. File Name: $FILE"
-outdir="$3/"
-outpath=$4
-mkdir -p $outpath
-scenario=$5
+
+# Indicate where GCAM outputs will be placed.
+output_sub_dir=$3
+gcam_meta_scenario=$4
+raw_outpath='${repo_path}relationships/gcam/output/raw/${gcam_meta_scenario}/${output_sub_dir}/'
+# ensure output dir exists to avoid errors
+mkdir -p $raw_outpath
+
+# Specify location of gcam executable and other relevant files
+gcam_exe_fpath=$5  # path to gcam executable
 date
-cd $6; pres=$(pwd); echo "$pres"
+cd $gcam_exe_fpath
 exe_extension="relationships/gcam/exe/xmldb_batch_template.xml"
 xmldb_batch="$repo_path$exe_extension"
 xmldb_driver_extension="relationships/gcam/exe/XMLDBDriver.properties"
 xmldb_driver_file="$repo_path$xmldb_driver_extension"
-cp $xmldb_driver_file $6 
-cat $xmldb_batch | sed "s#__OUTPUT_NAME__#${outpath}${scenario}_${NEW_TASK_ID}.csv#" | ./gcam.exe -C$FILE -Llog_conf.xml
+cp $xmldb_driver_file $gcam_exe_fpath 
+
+# Run GCAM
+cat $xmldb_batch | sed "s#__OUTPUT_NAME__#${raw_outpath}${gcam_meta_scenario}_${NEW_TASK_ID}.csv#" | ./gcam.exe -C$FILE -Llog_conf.xml
