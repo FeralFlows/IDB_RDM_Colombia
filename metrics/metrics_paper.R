@@ -1,7 +1,9 @@
+#!/usr/bin/env Rscript
+args <- commandArgs(trailingOnly = TRUE)
+run_name <- args[0] # Tom please change the args[??] to reflect command_line inputs
+scenario_name <- args[1] # Tom please change the args[??] to reflect command_line inputs
 
 # Install and load packages -----------------------------------------------
-
-rm(list=ls())
 
 if('tibble' %in% rownames(installed.packages()) == F){install.packages('tibble')}
 library(tibble)
@@ -23,17 +25,29 @@ if('rgcam' %in% rownames(installed.packages()) == F){devtools::install_github(re
 library(rgcam)
 if('metis' %in% rownames(installed.packages()) == F){devtools::install_github(repo="JGCRI/metis")}
 library(metis)
-library(rfasst)
+if('plutus' %in% rownames(installed.packages()) == F){devtools::install_github(repo="JGCRI/plutus")}
+library(plutus)
+# library(rfasst)
+
 
 # Set directories, load extra files ---------------------------------------
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 metrics_folder <- getwd()
-run_name <- 'runs_04_08_2021_test' # 'runs_512_02_08_2021' # only need to change this to the run folder name
-setwd(paste('..', run_name, sep = '/'))
+gcam_dir <- file.path('..', 'relationships', 'gcam')
 
-base_dir <- paste(getwd(), 'query_proj/', sep = '/')
-export_dir <- paste(getwd(), 'output_science_questions/', sep = '/')
+base_dir <- file.path(gcam_dir, 'outputs', 'post_processed', run_name)
+if(!file.exists(base_dir)){dir.create(base_dir)}
+export_dir <- file.path(metrics_folder, 'output', run_name)
 if(!file.exists(export_dir)){dir.create(export_dir)}
+if(!file.exists(file.path(export_dir, 'distribution'))){dir.create(file.path(export_dir, 'distribution'))}
+if(!file.exists(file.path(export_dir, 'cart'))){dir.create(file.path(export_dir, 'cart'))}
+
+## Import Experiment CSV
+path_to_EXP <- file.path(gcam_dir, 'config', 'output', 'doe')
+exp <- data.table::fread(paste0(path_to_EXP, '/DOE_XLRM_', scenario_name, '.csv'), header = TRUE)
+exp <- exp %>% 
+  mutate(scenario = str_replace(scenario, '_', '')) %>% 
+  mutate(experiment = as.character(experiment))
 
 ## Import Reference tables
 GWP <- read.csv(paste(metrics_folder, 'GWP.csv', sep = '/'), header = TRUE, sep = ",", dec = ".")
@@ -58,7 +72,7 @@ source(paste(metrics_folder, 'RDM_CART_fns.R', sep = '/'))
 # 1. Intermittent Renewables
 # --------------------------------------------------------------------------
 qry <- "Electricity generation by aggregate technology.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 ElecGenAggTech <- prj$data$`Electricity generation by aggregate technology`
@@ -125,7 +139,7 @@ PowGenHydro <- PowGenHydroGW %>%
   select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
 
 qry <- "elec gen by gen tech.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 ## RPS Calculations
@@ -150,7 +164,7 @@ RPS_pct <- ren_RPS %>%
 # GHG Emissions --------------------------------------------------
 ## Negative CO2 Emissions
 qry <- "CO2 emissions by sector.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 CO2Sector <- prj$data$`CO2 emissions by sector`
@@ -172,23 +186,23 @@ Metrics <- rbind(as_tibble(PowGenRenewInt),
                  as_tibble(TotalPowGen),
                  as_tibble(NegativeCO2))
 
-rdm_cart(PowGenRenewInt)
-rdm_cart(PowGenRenewIntGW)
-rdm_cart(PowGenRenewPct)
-rdm_cart(PowGenLowCarbPct)
-rdm_cart(PowGenHydro)
-rdm_cart(PowGenHydroGW)
-rdm_cart(TotalPowGen)
-rdm_cart(NegativeCO2)
+rdm_cart(PowGenRenewInt, exp, export_dir)
+rdm_cart(PowGenRenewIntGW, exp, export_dir)
+rdm_cart(PowGenRenewPct, exp, export_dir)
+rdm_cart(PowGenLowCarbPct, exp, export_dir)
+rdm_cart(PowGenHydro, exp, export_dir)
+rdm_cart(PowGenHydroGW, exp, export_dir)
+rdm_cart(TotalPowGen, exp, export_dir)
+rdm_cart(NegativeCO2, exp, export_dir)
 
-if(!file.exists(paste0(export_dir, '1-IntermittentRenewables/'))){
-  dir.create(paste0(export_dir, '1-IntermittentRenewables/'))
+if(!file.exists(file.path(export_dir, 'distribution', '1-IntermittentRenewables'))){
+  dir.create(file.path(export_dir, 'distribution', '1-IntermittentRenewables'))
 }
 # select_exps <- c('66', '82', '70', '86')
 for(i in seq(length(unique(Metrics$Metric)))){
   M <- Metrics %>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
   plot_df <- M
-  fig_path <- c(paste(export_dir, '1-IntermittentRenewables/', unique(Metrics$Metric)[i], '.png', sep = ""))
+  fig_path <- file.path(export_dir, 'distribution', '1-IntermittentRenewables', paste0(unique(Metrics$Metric)[i], '.png'))
   y_lbl <- paste(M$Metric[1], ' (', M$Units[1], ')', sep = "")
   line_plot(
     plot_df,
@@ -208,7 +222,7 @@ for(i in seq(length(unique(Metrics$Metric)))){
 
 
 qry <- "nonCO2 emissions by resource production.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 NonCO2ResProd <- prj$data$`nonCO2 emissions by resource production` %>%
@@ -221,7 +235,7 @@ NonCO2ResProd <- NonCO2ResProd %>%
 
 
 qry <- "nonCO2 emissions by sector.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 NonCO2Sector <- prj$data$`nonCO2 emissions by sector`
@@ -242,7 +256,7 @@ NonCO2_total_MTCO2e <- NonCO2_species_MTCO2e %>%
 # LUC emissions
 # --------------------------------------------------------------------------
 qry <- "Land Use Change Emission (future).proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 LUC_emissions <- prj$data$`Land Use Change Emission (future)` %>%
@@ -251,19 +265,20 @@ LUC_emissions <- prj$data$`Land Use Change Emission (future)` %>%
   dplyr::summarise(value = sum(value)) %>%
   mutate(Metric = "LUC Emissions")
 
-Metrics <- rbind(LUC_emissions) 
+Metrics <- as_tibble(LUC_emissions) 
 
-rdm_cart(LUC_emissions)
+rdm_cart(LUC_emissions, exp, export_dir)
 
-if(!file.exists(paste0(export_dir, 'LUC_Emissions'))){
-  dir.create(paste0(export_dir, 'LUC_Emissions/'))
+if(!file.exists(file.path(export_dir, 'distribution', 'LUC_Emissions'))){
+  dir.create(file.path(export_dir, 'distribution', 'LUC_Emissions'))
 }
 select_exps <- c('0', '16', '32', '48', '64', '80', '96', '112',
                  '128', '144', '160', '176', '192', '208', '224', '240')
+# select_exps <- c('NoPol_0', 'NoPol_16', 'NoPol_32', 'NoPol_48')
 for(i in seq(length(unique(Metrics$Metric)))){
   M <- Metrics %>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
   plot_df <- M
-  fig_path <- c(paste(export_dir, 'LUC_Emissions/', unique(Metrics$Metric)[i], '.png', sep = ""))
+  fig_path <- file.path(export_dir, 'distribution', 'LUC_Emissions', paste0(unique(Metrics$Metric)[i], '.png'))
   y_lbl <- paste(M$Metric[1], ' (', M$Units[1], ')', sep = "")
   line_plot(
     plot_df,
@@ -276,53 +291,52 @@ for(i in seq(length(unique(Metrics$Metric)))){
     x_max = x_max,
     legend_on = FALSE,
     gray_ribbon = TRUE,
-    distribution = TRUE,
+    distribution = NULL,
     plot_by_select_experiment = select_exps)
 }
 
 
-select_exps <- c('0', '16', '32', '48', '64', '80', '96', '112',
-                 '128', '144', '160', '176', '192', '208', '224', '240')
-
-LUC_emissions_filtered <- LUC_emissions %>%
-  filter(experiment %in% select_exps)
-
-LUC_emissions_filtered$experiment <- factor(LUC_emissions_filtered$experiment,
-                                            levels = c('0', '16', '32', '48', '64', '80', '96', '112',
-                                                       '128', '144', '160', '176', '192', '208', '224', '240'))
-                                            
-
-fig_path <- c(paste(export_dir, 'LUC_Emissions/', "LUC_Emissions_select", '.png', sep = ""))
-
-plot <- LUC_emissions_filtered %>%
-  filter(year >= 2015 & year <= 2050) %>%
-  ggplot(aes(x = year, y = value)) +
-  geom_line(size = 1, aes( color = experiment)) +
-  # coord_cartesian(ylim = c(-8E9, 8E9))+
-  scale_color_manual(values = c('darkred', 'darkred','darkred', 'darkred','darkred', 'darkred','darkred', 'darkred',
-                                'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen'))+
-  labs(y = "LUC Emissions (MTCO2e/yr)") +
-  theme_bw() +
-  theme(text = element_text(size = 12), axis.text.x = element_text(angle = 90, hjust = 1))+
-  theme(
-    text =                element_text(family = NULL, face = "plain",colour = "black", size = 8 ,hjust = 0.5,
-                                       vjust = 0.5, angle = 0, lineheight = 0.9)
-    ,axis.text.x =        element_text(size=8)
-    ,axis.text.y =        element_text(size=8)
-    # ,axis.title.x =       element_text(vjust = -1, margin=margin(t=1,unit="line"))
-    ,axis.title.x =       element_blank()
-    ,axis.title.y =       element_text(angle = 90, vjust = 2, margin=margin(r=1,unit="line"))
-    ,legend.key =         element_blank()
-    ,legend.key.size =    unit(1.0, 'lines')
-    ,legend.text =        element_text(size = 6, colour = "black")
-    ,legend.title =       element_text(size = rel(1), face = NULL, hjust = 0, colour = "black")
-    ,strip.background =   element_rect(fill = NA, colour = "black")
-    ,plot.margin =        unit(c(0.2, 0.2, 0.2, 0.2), "lines")
-    # ,plot.title=          element_text(face="bold", hjust=0.2, vjust = -1, margin = margin(b=20), size=8)
-    ,plot.title=          element_blank()
-    ,legend.position =    c('right')  # c(0.95, 0.95)
-  )+
-  ggsave(fig_path, height = 3.4, width = 4, units = "in")
+# select_exps <- c('0', '16', '32', '48', '64', '80', '96', '112',
+#                  '128', '144', '160', '176', '192', '208', '224', '240')
+# # select_exps <- c('NoPol_0', 'NoPol_16', 'NoPol_32', 'NoPol_48')
+# LUC_emissions_filtered <- LUC_emissions %>%
+#   filter(experiment %in% select_exps)
+# 
+# LUC_emissions_filtered$experiment <- factor(LUC_emissions_filtered$experiment,
+#                                             levels = select_exps)
+#                                             
+# 
+# fig_path <- c(paste(file.path(export_dir, 'distribution', 'LUC_Emissions'), '/', "LUC_Emissions_select", '.png', sep = ""))
+# 
+# plot <- LUC_emissions_filtered %>%
+#   filter(year >= 2015 & year <= 2050) %>%
+#   ggplot(aes(x = year, y = value)) +
+#   geom_line(size = 1, aes( color = experiment)) +
+#   # coord_cartesian(ylim = c(-8E9, 8E9))+
+#   scale_color_manual(values = c('darkred', 'darkred','darkred', 'darkred','darkred', 'darkred','darkred', 'darkred',
+#                                 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen', 'forestgreen'))+
+#   labs(y = "LUC Emissions (MTCO2e/yr)") +
+#   theme_bw() +
+#   theme(text = element_text(size = 12), axis.text.x = element_text(angle = 90, hjust = 1))+
+#   theme(
+#     text =                element_text(family = NULL, face = "plain",colour = "black", size = 8 ,hjust = 0.5,
+#                                        vjust = 0.5, angle = 0, lineheight = 0.9)
+#     ,axis.text.x =        element_text(size=8)
+#     ,axis.text.y =        element_text(size=8)
+#     # ,axis.title.x =       element_text(vjust = -1, margin=margin(t=1,unit="line"))
+#     ,axis.title.x =       element_blank()
+#     ,axis.title.y =       element_text(angle = 90, vjust = 2, margin=margin(r=1,unit="line"))
+#     ,legend.key =         element_blank()
+#     ,legend.key.size =    unit(1.0, 'lines')
+#     ,legend.text =        element_text(size = 6, colour = "black")
+#     ,legend.title =       element_text(size = rel(1), face = NULL, hjust = 0, colour = "black")
+#     ,strip.background =   element_rect(fill = NA, colour = "black")
+#     ,plot.margin =        unit(c(0.2, 0.2, 0.2, 0.2), "lines")
+#     # ,plot.title=          element_text(face="bold", hjust=0.2, vjust = -1, margin = margin(b=20), size=8)
+#     ,plot.title=          element_blank()
+#     ,legend.position =    c('right')  # c(0.95, 0.95)
+#   )+
+#   ggsave(fig_path, height = 3.4, width = 4, units = "in")
 
 # --------------------------------------------------------------------------
 # 2. Air Pollution
@@ -358,46 +372,45 @@ OC <- NonCO2_species %>%
 
 ## PM2.5
 ### This results is based on the output from rfasst
-pm25 <- m2_get_conc_pm25(db_path = NULL,
-                         query_path = NULL,
-                         db_name = NULL,
-                         prj_name = NULL,
-                         scen_name = 'NoPol_0',
-                         queries = NULL,
-                         prj_path=base_dir,
-                         read_prj=T,
-                         saveOutput = F,
-                         map = F)
-PM2.5 <- pm25 %>%
-  dplyr::filter(region %in% 'RSAM') %>%
-  dplyr::mutate(scenario = 'DDPXL',
-                old_scen_name = paste0(scenario, '_', Scenario),
-                Metric = 'PM 2.5') %>%
-  dplyr::rename(Units = units,
-                experiment = Scenario) %>% 
-  dplyr::mutate(year = as.numeric(as.character(year)))
+# pm25 <- m2_get_conc_pm25(db_path = NULL,
+#                          query_path = NULL,
+#                          db_name = NULL,
+#                          prj_name = NULL,
+#                          scen_name = 'NoPol_0',
+#                          queries = NULL,
+#                          prj_path=base_dir,
+#                          read_prj=T,
+#                          saveOutput = F,
+#                          map = F)
+# PM2.5 <- pm25 %>%
+#   dplyr::filter(region %in% 'RSAM') %>%
+#   dplyr::mutate(scenario = 'DDPXL',
+#                 old_scen_name = paste0(scenario, '_', Scenario),
+#                 Metric = 'PM 2.5') %>%
+#   dplyr::rename(Units = units,
+#                 experiment = Scenario) %>% 
+#   dplyr::mutate(year = as.numeric(as.character(year)))
 
 
 Metrics <- rbind(as_tibble(NOx),
                  as_tibble(SO2),
                  as_tibble(BC),
-                 as_tibble(OC),
-                 as_tibble(PM2.5))
+                 as_tibble(OC))
 
-rdm_cart(NOx)
-rdm_cart(SO2)
-rdm_cart(BC)
-rdm_cart(OC)
+rdm_cart(NOx, exp, export_dir)
+rdm_cart(SO2, exp, export_dir)
+rdm_cart(BC, exp, export_dir)
+rdm_cart(OC, exp, export_dir)
 
 
-if(!file.exists(paste0(export_dir, '2-AirPollution/'))){
-  dir.create(paste0(export_dir, '2-AirPollution/'))
+if(!file.exists(file.path(export_dir, 'distribution', '2-AirPollution'))){
+  dir.create(file.path(export_dir, 'distribution', '2-AirPollution'))
   }
 #select_exps <- c('66', '82', '70', '86')
 for(i in seq(length(unique(Metrics$Metric)))){
   M <- Metrics %>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
   plot_df <- M
-  fig_path <- c(paste(export_dir, '2-AirPollution/', unique(Metrics$Metric)[i], '.png', sep = ""))
+  fig_path <- file.path(export_dir, 'distribution', '2-AirPollution', paste0(unique(Metrics$Metric)[i], '.png'))
   y_lbl <- paste(M$Metric[1], ' (', M$Units[1], ')', sep = "")
   line_plot(
     plot_df,
@@ -420,7 +433,7 @@ for(i in seq(length(unique(Metrics$Metric)))){
 # --------------------------------------------------------------------------
 
 qry <- "aggregated land allocation.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 AggLandAlloc <- prj$data$`aggregated land allocation`
@@ -462,7 +475,7 @@ CropLand <- AggLandAlloc %>%
 
 
 qry <- "primary energy consumption by region (avg fossil efficiency).proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 PriEne <- prj$data$`primary energy consumption by region (avg fossil efficiency)`
@@ -508,7 +521,7 @@ biomassp_trad <- biomass_trad %>%
 
 ### Biofuel proportion of refined liquids production
 qry <- "refined liquids production by subsector.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 RefLiqProd <- prj$data$`refined liquids production by subsector`
@@ -526,7 +539,7 @@ biomass_liq_ratio <- RefLiqProd %>%
 
 ### Biofuel proportion of electricity generation
 qry <- "elec gen by gen tech.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 ElecGenTech <- prj$data$`elec gen by gen tech`
@@ -547,7 +560,7 @@ biomass_elec_ratio <- ElecGenTech %>%
 
 ### Biofuel proportion of gas production
 qry <- "gas production by tech.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 GasProTech <- prj$data$`gas production by tech`
@@ -565,7 +578,7 @@ biomass_gas_ratio <- GasProTech %>%
 
 ## Transportation Final Energy
 qry <- "transport final energy by fuel.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 TransFinal <- prj$data$`transport final energy by fuel`
@@ -619,7 +632,7 @@ BiomassTrans <- Reduce(function(...)
 ## Value of Crop Production
 # Note: this does not include inputs to livestock products: FeedCrops, FodderHerb, FodderGrass
 qry <- "prices of all markets.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 PriceAllMarkets <- prj$data$`prices of all markets`
@@ -631,10 +644,10 @@ CropPrices <- PriceAllMarkets %>%
                        "OilCrop", "MiscCrop", "PalmFruit", "biomass"))
 
 qry <- "Ag Production by Crop Type.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
-CropProdType <- prj$data$`ag production by crop type`
+CropProdType <- prj$data$`Ag Production by Crop Type`
 
 
 ValueCropProd <- CropProdType %>%
@@ -648,9 +661,10 @@ ValueCropProd <- CropProdType %>%
   # value of crop production = sum of (crop production X price of crop)
   # non-biomass crops: Mt * 1975$/kg * 10^9 * 4.25 2015$/1975$ = 2015$
   # biomass crops: EJ * 1975$/GJ * 10^9 * 4.25 2015$/1975$ = 2015$
+  # https://data.worldbank.org/indicator/NY.GDP.DEFL.ZS?locations=US&view=chart
   mutate(value = if_else(output != "biomass",
-                         value.Prod * value.Price * 10^9 * 4.25,
-                         value.Prod * value.Price * 10^9 * 4.25)) %>%
+                         value.Prod * value.Price * 10^9 * 3.5,
+                         value.Prod * value.Price * 10^9 * 3.5)) %>%
   group_by(scenario, experiment, old_scen_name, year) %>%
   # add up the value of crops together
   dplyr::summarise(value = sum(value)) %>%
@@ -661,7 +675,7 @@ ValueCropProd <- CropProdType %>%
 
 ## Crop Exports
 qry <- "Crop exports.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 CropExports <- prj$data$`Crop exports`
@@ -675,11 +689,12 @@ ValueCropExports <- CropExports %>%
   left_join(CropPrices, by = c("scenario", "input" = "market", "year", "experiment", "old_scen_name"),
             suffix = c(".Exports", ".Price")) %>%
   # value of crop exports = sum of (crop exports X price of crop)
-  # non-biomass crops: Mt * 1975$/kg * 10^9 * 4.25 2015$/1975$ = 2015$
-  # biomass crops: EJ * 1975$/GJ * 10^9 * 4.25 2015$/1975$ = 2015$
+  # non-biomass crops: Mt * 1975$/kg * 10^9 * 3.5 2015$/1975$ = 2015$
+  # biomass crops: EJ * 1975$/GJ * 10^9 * 3.5 2015$/1975$ = 2015$
+  # https://data.worldbank.org/indicator/NY.GDP.DEFL.ZS?locations=US&view=chart
   mutate(value = if_else(input != "biomass",
-                         value.Exports * value.Price * 10^9 * 4.25,
-                         value.Exports * value.Price * 10^9 * 4.25)) %>%
+                         value.Exports * value.Price * 10^9 * 3.5,
+                         value.Exports * value.Price * 10^9 * 3.5)) %>%
   group_by(scenario, experiment, old_scen_name, year) %>%
   # add up the value of crops together
   dplyr::summarise(value = sum(value)) %>%
@@ -709,28 +724,28 @@ Metrics <- rbind(as_tibble(UnmanagedLand),
                  as_tibble(BiomassExports),
                  as_tibble(BiomassTrans))
 
-rdm_cart(UnmanagedLand)
-rdm_cart(ForestLand)
-rdm_cart(ValueForestLand)
-rdm_cart(CropLand)
-rdm_cart(TCO2eqAgri) # need to run in another script.
-rdm_cart(biomass)
-rdm_cart(biomass_trad)
-rdm_cart(biomassp)
-rdm_cart(biomassp_trad)
-rdm_cart(ValueCropProd)
-rdm_cart(ValueCropExports)
-rdm_cart(BiomassExports)
-rdm_cart(BiomassTrans)
+rdm_cart(UnmanagedLand, exp, export_dir)
+rdm_cart(ForestLand, exp, export_dir)
+rdm_cart(ValueForestLand, exp, export_dir)
+rdm_cart(CropLand, exp, export_dir)
+rdm_cart(TCO2eqAgri, exp, export_dir) # need to run in another script.
+rdm_cart(biomass, exp, export_dir)
+rdm_cart(biomass_trad, exp, export_dir)
+rdm_cart(biomassp, exp, export_dir)
+rdm_cart(biomassp_trad, exp, export_dir)
+rdm_cart(ValueCropProd, exp, export_dir)
+rdm_cart(ValueCropExports, exp, export_dir)
+rdm_cart(BiomassExports, exp, export_dir)
+rdm_cart(BiomassTrans, exp, export_dir)
 
-if(!file.exists(paste0(export_dir, '3-Crop&Biomass/'))){
-  dir.create(paste0(export_dir, '3-Crop&Biomass/'))
+if(!file.exists(file.path(export_dir, 'distribution', '3-Crop&Biomass'))){
+  dir.create(file.path(export_dir, 'distribution', '3-Crop&Biomass'))
 }
 #select_exps <- c('66', '82', '70', '86')
 for(i in seq(length(unique(Metrics$Metric)))){
   M <- Metrics %>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
   plot_df <- M
-  fig_path <- c(paste(export_dir, '3-Crop&Biomass/', unique(Metrics$Metric)[i], '.png', sep = ""))
+  fig_path <- file.path(export_dir, 'distribution', '3-Crop&Biomass', paste0(unique(Metrics$Metric)[i], '.png'))
   y_lbl <- paste(M$Metric[1], ' (', M$Units[1], ')', sep = "")
   line_plot(
     plot_df,
@@ -767,18 +782,41 @@ plot_df <- data.frame(scenario = character(), experiment = integer(), region = c
 paramsSelect_i <- c("elecCumCapGW", "elecNewCapGW", "elecCumCapCost", "elecNewCapCost", "elecAnnualRetPrematureGW",
                     "elecCumRetPrematureGW", "elecAnnualRetPrematureCost", "elecCumRetPrematureCost")   # c('emissCO2BySectorNoBio')  # c('All')
 
-qry <- "select_queries_metis.proj"
-prj_path <- paste0(base_dir, qry)
-dataProj_i <- prj_path  # Use if gcamdata has been saved as .proj file
 
+# qry <- 'elec gen by gen tech and cooling tech and vintage.proj'
+# prj_path <- file.path(base_dir, qry)
+# prj <- loadProject(prj_path)
+# elec_vint <- prj$data$`elec gen by gen tech and cooling tech and vintage` %>% 
+#   filter(output %in% 'electricity') %>% 
+#   mutate(scenario = old_scen_name)
+# 
+# qry <- 'Electricity generation by aggregate technology.proj'
+# prj_path <- file.path(base_dir, qry)
+# prj <- loadProject(prj_path)
+# elec_tech <- prj$data$`Electricity generation by aggregate technology` %>% 
+#   mutate(scenario = old_scen_name)
+# 
+# RDM_results_for_Metis <- addQueryTable(prj, elec_tech, 'Electricity generation by aggregate technology', clobber = TRUE)
+
+
+qry <- "select_queries_plutus.proj"
+prj_path <- file.path(base_dir, qry)
+dataProj_i <- prj_path  # Use if gcamdata has been saved as .proj file
 RDM_results_for_Metis <- loadProject(dataProj_i)
 scenOrigNames_i <- listScenarios(RDM_results_for_Metis)
 regionsSelect_i <- c("Colombia")
-dataGCAM <- metis.readgcam(reReadData = F,  # TRUE create a .proj file
-                           scenOrigNames = scenOrigNames_i,
-                           dataProj = dataProj_i,
-                           regionsSelect = regionsSelect_i,
-                           paramsSelect = paramsSelect_i)
+
+# dataGCAM <- metis.readgcam(reReadData = F,  # TRUE create a .proj file
+#                            scenOrigNames = scenOrigNames_i,
+#                            dataProj = dataProj_i,
+#                            regionsSelect = regionsSelect_i,
+#                            paramsSelect = paramsSelect_i)
+
+dataGCAM <- plutus::gcamInvest(reReadData = F,  # TRUE create a .proj file
+                               scenOrigNames = scenOrigNames_i,
+                               dataProj = RDM_results_for_Metis,
+                               regionsSelect = regionsSelect_i,
+                               saveData = FALSE)
 
 # Post-process Metis outputs so that you have Scenarios and experiments correctly broken out. For example, there are 80
 # experiments per scenario. All should have the same scenario name (e.g., "Reference")
@@ -798,7 +836,8 @@ plot_df_append <- reorg_dataGCAM_data %>%
 plot_df_append <- plot_df_append[, c(1,3,2,6,5,7,4)]
 
 # Load reference scenario
-dataGCAM_ref <- metis.readgcam(reReadData = F,  # TRUE create a .proj file
+if(F){
+  dataGCAM_ref <- metis.readgcam(reReadData = F,  # TRUE create a .proj file
                                scenOrigNames = 'Reference',
                                dataProj = 'E:/NEXO-UA/Results/metis/gcam_database/outputs/dataProj_gcam5p3_HadGEM2-ES_rcp8p5.proj',
                                regionsSelect = regionsSelect_i,
@@ -817,6 +856,8 @@ plot_df_append <- plot_df_append %>%
   mutate(value = value.exp - value.ref) %>%
   dplyr::rename(scenario = scenario.exp) %>%
   dplyr::select(-value.exp, -value.ref, -scenario.ref)
+}
+
 
 plot_df <- rbind(plot_df, plot_df_append)
 plot_df <- plot_df %>%
@@ -833,15 +874,15 @@ ymax_list <- list("elecCumCapGW" = NULL, "elecNewCapGW" = NULL, "elecCumCapCost"
                   "elecAnnualRetPrematureGW" = 1, "elecCumRetPrematureGW" = 1,
                   "elecAnnualRetPrematureCost" = 1, "elecCumRetPrematureCost" = 1)
 
-if(!file.exists(paste0(export_dir, '4-ElecInvestments/'))){
-  dir.create(paste0(export_dir, '4-ElecInvestments/'))
+if(!file.exists(file.path(export_dir, 'distribution', '4-ElecInvestments'))){
+  dir.create(file.path(export_dir, 'distribution', '4-ElecInvestments'))
 }
 # select_exps <- c('42', '58', '46', '62')
 plot_scens <- c('DDPXL')  # c('DelayedEndPt', 'DDP', 'DelayedCumEmiss') # c("ColPol", "DDP")
 plot_XLfacs <- c('InvalidEntry')
 for(paramSelect in params){
   title <- paramSelect
-  fig_path <- paste0(export_dir, '4-ElecInvestments/', paramSelect, "_select", '.png')
+  fig_path <- file.path(export_dir, 'distribution', '4-ElecInvestments', paste0(paramSelect, "_select", '.png'))
   plot_df_sub <- plot_df %>%
     filter(param == paramSelect)
   y_lbl <- unique(plot_df_sub$Units)[1]
@@ -868,7 +909,7 @@ for(paramSelect in params){
            Metric = strsplit(y_lbl, '\\(|\\)')[[1]][1],
            Units = strsplit(y_lbl, '\\(|\\)')[[1]][2]) %>%
     select(-param)
-  rdm_cart(df_cart)
+  rdm_cart(df_cart, exp, export_dir)
 }
 
 
@@ -877,7 +918,7 @@ for(paramSelect in params){
 # --------------------------------------------------------------------------
 
 qry <- "final energy consumption by sector and fuel.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 FinalEneFuel <- prj$data$`final energy consumption by sector and fuel`
@@ -969,18 +1010,18 @@ Metrics <- rbind(as_tibble(ElecPctFinalEneFuel),
                  as_tibble(HydrogenPctFinalEneFuel),
                  as_tibble(BiomassFinalEne))
 
-rdm_cart(ElecPctFinalEneFuel)
-rdm_cart(HydrogenPctFinalEneFuel)
-rdm_cart(BiomassFinalEne)
+rdm_cart(ElecPctFinalEneFuel, exp, export_dir)
+rdm_cart(HydrogenPctFinalEneFuel, exp, export_dir)
+rdm_cart(BiomassFinalEne, exp, export_dir)
 
-if(!file.exists(paste0(export_dir, '5-Electrification&AltFuels/'))){
-  dir.create(paste0(export_dir, '5-Electrification&AltFuels/'))
+if(!file.exists(file.path(export_dir, 'distribution', '5-Electrification&AltFuels'))){
+  dir.create(file.path(export_dir, 'distribution', '5-Electrification&AltFuels'))
 }
 #select_exps <- c('66', '82', '70', '86')
 for(i in seq(length(unique(Metrics$Metric)))){
   M <- Metrics %>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
   plot_df <- M
-  fig_path <- c(paste(export_dir, '5-Electrification&AltFuels/', unique(Metrics$Metric)[i], '.png', sep = ""))
+  fig_path <- file.path(export_dir, 'distribution', '5-Electrification&AltFuels', paste0(unique(Metrics$Metric)[i], '.png'))
   y_lbl <- paste(M$Metric[1], ' (', M$Units[1], ')', sep = "")
   line_plot(
     plot_df,
@@ -1062,7 +1103,7 @@ gasp <- gas %>%
 ## Global oil consumption
 ## Global natural gas
 qry <- "demand of all markets.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 DemandAllMarkets <- prj$data$`demand of all markets`
@@ -1083,21 +1124,21 @@ Metrics <- rbind(as_tibble(oilprice),
                  as_tibble(GlobalOil),
                  as_tibble(GlobalNG))
 
-rdm_cart(oilprice)
-rdm_cart(ngprice)
-rdm_cart(oil)
-rdm_cart(gas)
-rdm_cart(GlobalOil)
-rdm_cart(GlobalNG)
+rdm_cart(oilprice, exp, export_dir)
+rdm_cart(ngprice, exp, export_dir)
+rdm_cart(oil, exp, export_dir)
+rdm_cart(gas, exp, export_dir)
+rdm_cart(GlobalOil, exp, export_dir)
+rdm_cart(GlobalNG, exp, export_dir)
 
-if(!file.exists(paste0(export_dir, '6-GlobalOilGasPrice/'))){
-  dir.create(paste0(export_dir, '6-GlobalOilGasPrice/'))
+if(!file.exists(file.path(export_dir, 'distribution', '6-GlobalOilGasPrice'))){
+  dir.create(file.path(export_dir, 'distribution', '6-GlobalOilGasPrice'))
 }
 #select_exps <- c('66', '82', '70', '86')
 for(i in seq(length(unique(Metrics$Metric)))){
   M <- Metrics %>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
   plot_df <- M
-  fig_path <- c(paste(export_dir, '6-GlobalOilGasPrice/', unique(Metrics$Metric)[i], '.png', sep = ""))
+  fig_path <- file.path(export_dir, 'distribution', '6-GlobalOilGasPrice', paste0(unique(Metrics$Metric)[i], '.png'))
   y_lbl <- paste(M$Metric[1], ' (', M$Units[1], ')', sep = "")
   line_plot(
     plot_df,
@@ -1119,13 +1160,13 @@ for(i in seq(length(unique(Metrics$Metric)))){
 # Transportation externality costs ----------------------------------------------------
 
 qry <- "transport final energy by mode and fuel.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 TrnFinalEneModeFuel <- prj$data$`transport final energy by mode and fuel`
 
 qry <- "transport service output by tech.proj"
-prj_path <- paste0(base_dir, qry)
+prj_path <- file.path(base_dir, qry)
 prj <- loadProject(prj_path)
 
 TrnServTech <- prj$data$`transport service output by tech`
@@ -1392,21 +1433,21 @@ Metrics <- rbind(as_tibble(TrnCongestion),
                  as_tibble(TrnPassRoadServ),
                  as_tibble(TrnFreightRoadServ))
 
-rdm_cart(TrnCongestion)
-rdm_cart(TrnAccidents)
-rdm_cart(TrnRdDamage)
-rdm_cart(TrnExternality)
-rdm_cart(TrnPassRoadServ)
-rdm_cart(TrnFreightRoadServ)
+rdm_cart(TrnCongestion, exp, export_dir)
+rdm_cart(TrnAccidents, exp, export_dir)
+rdm_cart(TrnRdDamage, exp, export_dir)
+rdm_cart(TrnExternality, exp, export_dir)
+rdm_cart(TrnPassRoadServ, exp, export_dir)
+rdm_cart(TrnFreightRoadServ, exp, export_dir)
 
-if(!file.exists(paste0(export_dir, 'TrnExternalityCosts/'))){
-  dir.create(paste0(export_dir, 'TrnExternalityCosts/'))
+if(!file.exists(file.path(export_dir, 'distribution', 'TrnExternalityCosts'))){
+  dir.create(file.path(export_dir, 'distribution', 'TrnExternalityCosts'))
 }
 #select_exps <- c('66', '82', '70', '86')
 for(i in seq(length(unique(Metrics$Metric)))){
   M <- Metrics %>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
   plot_df <- M
-  fig_path <- c(paste(export_dir, 'TrnExternalityCosts/', unique(Metrics$Metric)[i], '.png', sep = ""))
+  fig_path <- file.path(export_dir, 'distribution', 'TrnExternalityCosts', paste0(unique(Metrics$Metric)[i], '.png'))
   y_lbl <- paste(M$Metric[1], ' (', M$Units[1], ')', sep = "")
   line_plot(
     plot_df,
@@ -1427,21 +1468,44 @@ for(i in seq(length(unique(Metrics$Metric)))){
 
 # VALUE OF AG PRODUCTION AND EXPORTS --------------------------------------
 
-
-biomass_exports <- getQuery(prj, "Crop exports") %>%
-  filter(grepl("biomass", sector))
-biomass_imports_domestic <- getQuery(prj, "Quantity available for crop commodity demand (domestic and imported)") %>%
+biomass_exports <- CropExports %>%
   filter(grepl("biomass", sector))
 
-exports <- getQuery(prj, "traded ag commodity sources")
-imports_domestic <- getQuery(prj, "regional ag commodity sources")
+qry <- "Quantity available for crop commodity demand (domestic and imported).proj"
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+biomass_imports_domestic <- prj$data$`Quantity available for crop commodity demand (domestic and imported)` %>%
+  filter(grepl("biomass", sector))
 
+qry <- "traded ag commodity sources.proj"
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+exports <- prj$data$`traded ag commodity sources`
 
-traded_ag_commodity_prices <- getQuery(prj, "traded ag commodity prices")
-regional_ag_commodity_prices <- getQuery(prj, "regional ag commodity price")
-crop_prices <- getQuery(prj, "ag commodity prices")
+qry <- "regional ag commodity sources.proj"
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+imports_domestic <- prj$data$`regional ag commodity sources`
 
-biomass_commodity_prices <- getQuery(prj, "regional biomass commodity price")
+qry <- "traded ag commodity prices.proj" # we dont have this proj file
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+traded_ag_commodity_prices <- prj$data$`traded ag commodity prices`
+
+qry <- "regional ag commodity price.proj" # we dont have this proj file
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+regional_ag_commodity_prices <- prj$data$`regional ag commodity price`
+
+qry <- "ag commodity prices.proj"
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+crop_prices <- prj$data$`ag commodity prices`
+
+qry <- "regional biomass commodity price.proj" # we dont have this proj file
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+biomass_commodity_prices <- prj$data$`regional biomass commodity price`
 
 
 region_name <- "Colombia"
@@ -1550,7 +1614,10 @@ region_net_trade_value <- region_net_trade_volume %>%
 #total value of net trade
 region_total_net_trade_value <- region_net_trade_value %>%
   group_by(scenario, region, year, Units) %>%
-  summarise_at( c("value.imports", "value.exports", "value.net"), sum)
+  summarise_at( c("value.imports", "value.exports", "value.net"), sum) %>% 
+  dplyr::mutate(value = value.net,
+                Metric = 'Total Value of Net Trade') %>% 
+  dplyr::select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
 
 #value of domestic commodity
 region_domestic_value <- region_domestic %>%
@@ -1575,6 +1642,42 @@ region_production_value <- region_domestic_value %>%
 #total value of production
 region_total_production_value <- region_production_value %>%
   group_by(scenario, region, year, Units) %>%
-  dplyr::summarise(value.production = sum(value.production))
+  dplyr::summarise(value.production = sum(value.production)) %>% 
+  dplyr::mutate(value = value.production,
+                Metric = 'Total Value of Production') %>% 
+  dplyr::select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
+
+# Plot
+Metrics <- rbind(as_tibble(region_total_net_trade_value),
+                 as_tibble(region_total_production_value))
+
+rdm_cart(region_total_net_trade_value, exp, export_dir)
+rdm_cart(region_total_production_value, exp, export_dir)
+
+if(!file.exists(file.path(export_dir, 'distribution', 'AgTrade'))){
+  dir.create(file.path(export_dir, 'distribution', 'AgTrade'))
+}
+#select_exps <- c('66', '82', '70', '86')
+for(i in seq(length(unique(Metrics$Metric)))){
+  M <- Metrics %>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
+  plot_df <- M
+  fig_path <- file.path(export_dir, 'distribution', 'AgTrade', paste0(unique(Metrics$Metric)[i], '.png'))
+  y_lbl <- paste(M$Metric[1], ' (', M$Units[1], ')', sep = "")
+  line_plot(
+    plot_df,
+    fig_path,
+    plot_scens,
+    y_lbl = y_lbl,
+    x_lbl = x_lbl,
+    title = NULL,
+    x_min = x_min,
+    x_max = x_max,
+    legend_on = FALSE,
+    gray_ribbon = TRUE,
+    plot_by_select_experiment = FALSE,
+    distribution = TRUE
+  )
+}
+
 # Save all environmental data for post processing
-save.image(file='E:/NEXO-UA/Results/RDM_Colombia/runs_512_02_08_2021/runs_512_01_08_2021.RData')
+# save.image(file='E:/NEXO-UA/Results/RDM_Colombia/runs_512_02_08_2021/runs_512_01_08_2021.RData')

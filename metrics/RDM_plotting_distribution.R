@@ -52,9 +52,9 @@ line_plot <- function(plot_df, fig_path, plot_scens, plot_XLfacs, y_lbl=NULL,
           filter(year==yr) %>%
           summarize(max=max(value), min=min(value), year=yr)
         smry_final <- rbind(smry_final, smry)
-        plot_df <- plot_df %>% left_join(smry_final, by=c('year'))
-        p <- p + geom_ribbon(data=plot_df , aes(x = year, ymin=min, ymax=max), fill="grey85")
-        }
+      }
+      plot_df <- plot_df %>% left_join(smry_final, by=c('year'))
+      p <- p + geom_ribbon(data=plot_df , aes(x = year, ymin=min, ymax=max), fill="grey85")
     }
   }
 
