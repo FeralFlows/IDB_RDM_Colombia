@@ -25,6 +25,8 @@ if('rgcam' %in% rownames(installed.packages()) == F){devtools::install_github(re
 library(rgcam)
 if('metis' %in% rownames(installed.packages()) == F){devtools::install_github(repo="JGCRI/metis")}
 library(metis)
+if('plutus' %in% rownames(installed.packages()) == F){devtools::install_github(repo="JGCRI/plutus")}
+library(plutus)
 # library(rfasst)
 
 
@@ -37,6 +39,8 @@ base_dir <- file.path(gcam_dir, 'outputs', 'post_processed', run_name)
 if(!file.exists(base_dir)){dir.create(base_dir)}
 export_dir <- file.path(metrics_folder, 'output', run_name)
 if(!file.exists(export_dir)){dir.create(export_dir)}
+if(!file.exists(file.path(export_dir, 'distribution'))){dir.create(file.path(export_dir, 'distribution'))}
+if(!file.exists(file.path(export_dir, 'cart'))){dir.create(file.path(export_dir, 'cart'))}
 
 ## Import Experiment CSV
 path_to_EXP <- file.path(gcam_dir, 'config', 'output', 'doe')
@@ -657,9 +661,10 @@ ValueCropProd <- CropProdType %>%
   # value of crop production = sum of (crop production X price of crop)
   # non-biomass crops: Mt * 1975$/kg * 10^9 * 4.25 2015$/1975$ = 2015$
   # biomass crops: EJ * 1975$/GJ * 10^9 * 4.25 2015$/1975$ = 2015$
+  # https://data.worldbank.org/indicator/NY.GDP.DEFL.ZS?locations=US&view=chart
   mutate(value = if_else(output != "biomass",
-                         value.Prod * value.Price * 10^9 * 4.25,
-                         value.Prod * value.Price * 10^9 * 4.25)) %>%
+                         value.Prod * value.Price * 10^9 * 3.5,
+                         value.Prod * value.Price * 10^9 * 3.5)) %>%
   group_by(scenario, experiment, old_scen_name, year) %>%
   # add up the value of crops together
   dplyr::summarise(value = sum(value)) %>%
@@ -684,11 +689,12 @@ ValueCropExports <- CropExports %>%
   left_join(CropPrices, by = c("scenario", "input" = "market", "year", "experiment", "old_scen_name"),
             suffix = c(".Exports", ".Price")) %>%
   # value of crop exports = sum of (crop exports X price of crop)
-  # non-biomass crops: Mt * 1975$/kg * 10^9 * 4.25 2015$/1975$ = 2015$
-  # biomass crops: EJ * 1975$/GJ * 10^9 * 4.25 2015$/1975$ = 2015$
+  # non-biomass crops: Mt * 1975$/kg * 10^9 * 3.5 2015$/1975$ = 2015$
+  # biomass crops: EJ * 1975$/GJ * 10^9 * 3.5 2015$/1975$ = 2015$
+  # https://data.worldbank.org/indicator/NY.GDP.DEFL.ZS?locations=US&view=chart
   mutate(value = if_else(input != "biomass",
-                         value.Exports * value.Price * 10^9 * 4.25,
-                         value.Exports * value.Price * 10^9 * 4.25)) %>%
+                         value.Exports * value.Price * 10^9 * 3.5,
+                         value.Exports * value.Price * 10^9 * 3.5)) %>%
   group_by(scenario, experiment, old_scen_name, year) %>%
   # add up the value of crops together
   dplyr::summarise(value = sum(value)) %>%
@@ -793,24 +799,24 @@ paramsSelect_i <- c("elecCumCapGW", "elecNewCapGW", "elecCumCapCost", "elecNewCa
 # RDM_results_for_Metis <- addQueryTable(prj, elec_tech, 'Electricity generation by aggregate technology', clobber = TRUE)
 
 
-qry <- "select_queries_metis.proj"
+qry <- "select_queries_plutus.proj"
 prj_path <- file.path(base_dir, qry)
 dataProj_i <- prj_path  # Use if gcamdata has been saved as .proj file
 RDM_results_for_Metis <- loadProject(dataProj_i)
 scenOrigNames_i <- listScenarios(RDM_results_for_Metis)
 regionsSelect_i <- c("Colombia")
 
-dataGCAM <- metis.readgcam(reReadData = F,  # TRUE create a .proj file
-                           scenOrigNames = scenOrigNames_i,
-                           dataProj = dataProj_i,
-                           regionsSelect = regionsSelect_i,
-                           paramsSelect = paramsSelect_i)
+# dataGCAM <- metis.readgcam(reReadData = F,  # TRUE create a .proj file
+#                            scenOrigNames = scenOrigNames_i,
+#                            dataProj = dataProj_i,
+#                            regionsSelect = regionsSelect_i,
+#                            paramsSelect = paramsSelect_i)
 
-# dataGCAM <- plutus::gcamInvest(reReadData = F,  # TRUE create a .proj file
-#                                scenOrigNames = scenOrigNames_i,
-#                                dataProj = RDM_results_for_Metis,
-#                                regionsSelect = regionsSelect_i,
-#                                saveData = FALSE)
+dataGCAM <- plutus::gcamInvest(reReadData = F,  # TRUE create a .proj file
+                               scenOrigNames = scenOrigNames_i,
+                               dataProj = RDM_results_for_Metis,
+                               regionsSelect = regionsSelect_i,
+                               saveData = FALSE)
 
 # Post-process Metis outputs so that you have Scenarios and experiments correctly broken out. For example, there are 80
 # experiments per scenario. All should have the same scenario name (e.g., "Reference")
@@ -1461,180 +1467,216 @@ for(i in seq(length(unique(Metrics$Metric)))){
 
 
 # VALUE OF AG PRODUCTION AND EXPORTS --------------------------------------
-if(F){
-  
-  biomass_exports <- CropExports %>%
-    filter(grepl("biomass", sector))
-  
-  qry <- "Quantity available for crop commodity demand (domestic and imported).proj"
-  prj_path <- file.path(base_dir, qry)
-  prj <- loadProject(prj_path)
-  biomass_imports_domestic <- prj$data$`Quantity available for crop commodity demand (domestic and imported)` %>%
-    filter(grepl("biomass", sector))
-  
-  qry <- "traded ag commodity sources.proj"
-  prj_path <- file.path(base_dir, qry)
-  prj <- loadProject(prj_path)
-  exports <- prj$data$`traded ag commodity sources`
-  
-  qry <- "regional ag commodity sources.proj"
-  prj_path <- file.path(base_dir, qry)
-  prj <- loadProject(prj_path)
-  imports_domestic <- prj$data$`regional ag commodity sources`
-  
-  qry <- "traded ag commodity prices.proj" # we dont have this proj file
-  prj_path <- file.path(base_dir, qry)
-  prj <- loadProject(prj_path)
-  traded_ag_commodity_prices <- prj$data$`traded ag commodity prices`
-  
-  qry <- "regional ag commodity price.proj" # we dont have this proj file
-  prj_path <- file.path(base_dir, qry)
-  prj <- loadProject(prj_path)
-  regional_ag_commodity_prices <- prj$data$`regional ag commodity price`
-  
-  qry <- "ag commodity prices.proj"
-  prj_path <- file.path(base_dir, qry)
-  prj <- loadProject(prj_path)
-  crop_prices <- prj$data$`ag commodity prices`
-  
-  qry <- "regional biomass commodity price.proj" # we dont have this proj file
-  prj_path <- file.path(base_dir, qry)
-  prj <- loadProject(prj_path)
-  biomass_commodity_prices <- prj$data$`regional biomass commodity price`
-  
-  
-  region_name <- "Colombia"
-  #process biomass
-  region_biomass_exports <- biomass_exports %>%
-    filter(grepl(region_name, subsector)) %>%
-    mutate(region = region_name,
-           sector = gsub("traded ", "", sector)) %>%
-    select(-input, -subsector)
-  
-  region_biomass_imports <- biomass_imports_domestic %>%
-    filter(grepl("imported", subsector), region == region_name) %>%
-    mutate(region = region_name,
-           sector = gsub("total ", "", sector)) %>%
-    select(-input, -subsector, -technology)
-  
-  region_biomass_domestic <- biomass_imports_domestic %>%
-    filter(grepl("domestic", subsector), region == region_name) %>%
-    mutate(region = region_name,
-           sector = gsub("total ", "", sector)) %>%
-    select(-input, -subsector, -technology)
-  
-  #combine biomass with the rest of crop and livestock
-  region_exports <- exports %>%
-    filter(grepl(region_name, subsector)) %>%
-    mutate(region = region_name,
-           sector = gsub("traded ", "", sector)) %>%
-    mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
-    select(-input, -subsector) %>%
-    bind_rows(region_biomass_exports)
-  
-  region_imports <- imports_domestic %>%
-    filter(grepl("imported", subsector), region == region_name) %>%
-    mutate(sector = gsub("regional ", "", sector)) %>%
-    mutate(sector = gsub("total ", "", sector)) %>%
-    mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
-    select(-subsector, -input) %>%
-    bind_rows(region_biomass_imports)
-  
-  region_domestic <- imports_domestic %>%
-    filter(grepl("domestic", subsector), region == region_name) %>%
-    mutate(sector = gsub("regional ", "", sector)) %>%
-    mutate(sector = gsub("total", "", sector)) %>%
-    mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
-    select(-subsector, -input) %>%
-    bind_rows(region_biomass_domestic)
-  
-  #prices
-  region_domestic_biomass_prices <- biomass_commodity_prices %>%
-    filter(subsector == "domestic biomass", region == region_name) %>%
-    mutate(sector = gsub("total ", "", sector)) %>%
-    select(-subsector)
-  
-  region_imported_biomass_prices <- biomass_commodity_prices %>%
-    filter(subsector == "imported biomass", region == region_name) %>%
-    mutate(sector = gsub("total ", "", sector)) %>%
-    select(-subsector)
-  
-  region_domestic_prices <- regional_ag_commodity_prices %>%
-    filter(grepl("domestic ", subsector), region == region_name) %>%
-    mutate(sector = gsub("regional ", "", sector)) %>%
-    mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
-    select(-subsector) %>%
-    bind_rows(region_domestic_biomass_prices) %>%
-    rename(price.domestic = value)
-  
-  region_import_prices <- regional_ag_commodity_prices %>%
-    filter(grepl("imported ", subsector), region == region_name) %>%
-    mutate(sector = gsub("regional ", "", sector)) %>%
-    mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
-    select(-subsector) %>%
-    bind_rows(region_imported_biomass_prices) %>%
-    rename(price.imports = value)
-  
-  region_export_prices <- traded_ag_commodity_prices %>%
-    filter(grepl(region_name, subsector),
-           grepl("traded ", subsector)) %>%
-    mutate(region = region_name) %>%
-    mutate(sector = gsub("traded ", "", sector)) %>%
-    mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
-    select(-subsector) %>%
-    rename(price.exports = value)
-  
-  
-  #Combine region's imports, exports, and calculate net trade volume by commodity
-  region_net_trade_volume <- region_imports %>%
-    full_join(region_exports, by = c("region", "Units", "scenario", "sector", "year"), suffix = c(".imports", ".exports")) %>%
-    filter(year %in% c(seq(2015, 2050, 5))) %>%
-    #Imports are negative, exports are positive
-    mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%
-    mutate(value.imports = value.imports * -1,
-           value.exports = if_else(is.na(value.exports), 0, value.exports),
-           value.net = value.exports + value.imports)
-  
-  #value of net trade by commodity
-  region_net_trade_value <- region_net_trade_volume %>%
-    left_join(region_import_prices, by = c("scenario", "region", "sector", "year")) %>%
-    select(-Units.x, -Units.y) %>%
-    left_join(region_export_prices, by = c("scenario", "region", "sector", "year")) %>%
-    mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%
-    mutate(value.imports = value.imports * price.imports * 10^9 * 3.5,
-           value.exports = value.exports * price.exports * 10^9 * 3.5) %>%
-    mutate(value.net = value.exports + value.imports,
-           Units = "2015$")
-  
-  #total value of net trade
-  region_total_net_trade_value <- region_net_trade_value %>%
-    group_by(scenario, region, year, Units) %>%
-    summarise_at( c("value.imports", "value.exports", "value.net"), sum)
-  
-  #value of domestic commodity
-  region_domestic_value <- region_domestic %>%
-    filter(year %in% c(seq(2015, 2050, 5))) %>%
-    left_join(region_domestic_prices, by = c("scenario", "region", "sector", "year")) %>%
-    mutate(value.domestic = value * price.domestic * 10^9 * 3.5,
-           Units = "2015$") %>%
-    select(-Units.x, -Units.y, -value)
-  
-  #total value of domestic commodities
-  region_total_domestic_value <- region_domestic_value %>%
-    mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%
-    group_by(scenario, region, year, Units) %>%
-    dplyr::summarise(value.domestic = sum(value.domestic))
-  
-  #value of production by commodity
-  region_production_value <- region_domestic_value %>%
-    full_join(region_net_trade_value, by = c("scenario", "region", "sector", "year", "Units")) %>%
-    mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%
-    mutate(value.production = value.domestic + value.exports)
-  
-  #total value of production
-  region_total_production_value <- region_production_value %>%
-    group_by(scenario, region, year, Units) %>%
-    dplyr::summarise(value.production = sum(value.production))
+
+biomass_exports <- CropExports %>%
+  filter(grepl("biomass", sector))
+
+qry <- "Quantity available for crop commodity demand (domestic and imported).proj"
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+biomass_imports_domestic <- prj$data$`Quantity available for crop commodity demand (domestic and imported)` %>%
+  filter(grepl("biomass", sector))
+
+qry <- "traded ag commodity sources.proj"
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+exports <- prj$data$`traded ag commodity sources`
+
+qry <- "regional ag commodity sources.proj"
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+imports_domestic <- prj$data$`regional ag commodity sources`
+
+qry <- "traded ag commodity prices.proj" # we dont have this proj file
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+traded_ag_commodity_prices <- prj$data$`traded ag commodity prices`
+
+qry <- "regional ag commodity price.proj" # we dont have this proj file
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+regional_ag_commodity_prices <- prj$data$`regional ag commodity price`
+
+qry <- "ag commodity prices.proj"
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+crop_prices <- prj$data$`ag commodity prices`
+
+qry <- "regional biomass commodity price.proj" # we dont have this proj file
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+biomass_commodity_prices <- prj$data$`regional biomass commodity price`
+
+
+region_name <- "Colombia"
+#process biomass
+region_biomass_exports <- biomass_exports %>%
+  filter(grepl(region_name, subsector)) %>%
+  mutate(region = region_name,
+         sector = gsub("traded ", "", sector)) %>%
+  select(-input, -subsector)
+
+region_biomass_imports <- biomass_imports_domestic %>%
+  filter(grepl("imported", subsector), region == region_name) %>%
+  mutate(region = region_name,
+         sector = gsub("total ", "", sector)) %>%
+  select(-input, -subsector, -technology)
+
+region_biomass_domestic <- biomass_imports_domestic %>%
+  filter(grepl("domestic", subsector), region == region_name) %>%
+  mutate(region = region_name,
+         sector = gsub("total ", "", sector)) %>%
+  select(-input, -subsector, -technology)
+
+#combine biomass with the rest of crop and livestock
+region_exports <- exports %>%
+  filter(grepl(region_name, subsector)) %>%
+  mutate(region = region_name,
+         sector = gsub("traded ", "", sector)) %>%
+  mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
+  select(-input, -subsector) %>%
+  bind_rows(region_biomass_exports)
+
+region_imports <- imports_domestic %>%
+  filter(grepl("imported", subsector), region == region_name) %>%
+  mutate(sector = gsub("regional ", "", sector)) %>%
+  mutate(sector = gsub("total ", "", sector)) %>%
+  mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
+  select(-subsector, -input) %>%
+  bind_rows(region_biomass_imports)
+
+region_domestic <- imports_domestic %>%
+  filter(grepl("domestic", subsector), region == region_name) %>%
+  mutate(sector = gsub("regional ", "", sector)) %>%
+  mutate(sector = gsub("total", "", sector)) %>%
+  mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
+  select(-subsector, -input) %>%
+  bind_rows(region_biomass_domestic)
+
+#prices
+region_domestic_biomass_prices <- biomass_commodity_prices %>%
+  filter(subsector == "domestic biomass", region == region_name) %>%
+  mutate(sector = gsub("total ", "", sector)) %>%
+  select(-subsector)
+
+region_imported_biomass_prices <- biomass_commodity_prices %>%
+  filter(subsector == "imported biomass", region == region_name) %>%
+  mutate(sector = gsub("total ", "", sector)) %>%
+  select(-subsector)
+
+region_domestic_prices <- regional_ag_commodity_prices %>%
+  filter(grepl("domestic ", subsector), region == region_name) %>%
+  mutate(sector = gsub("regional ", "", sector)) %>%
+  mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
+  select(-subsector) %>%
+  bind_rows(region_domestic_biomass_prices) %>%
+  rename(price.domestic = value)
+
+region_import_prices <- regional_ag_commodity_prices %>%
+  filter(grepl("imported ", subsector), region == region_name) %>%
+  mutate(sector = gsub("regional ", "", sector)) %>%
+  mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
+  select(-subsector) %>%
+  bind_rows(region_imported_biomass_prices) %>%
+  rename(price.imports = value)
+
+region_export_prices <- traded_ag_commodity_prices %>%
+  filter(grepl(region_name, subsector),
+         grepl("traded ", subsector)) %>%
+  mutate(region = region_name) %>%
+  mutate(sector = gsub("traded ", "", sector)) %>%
+  mutate(sector = gsub("root_tuber", "roottuber", sector)) %>%
+  select(-subsector) %>%
+  rename(price.exports = value)
+
+
+#Combine region's imports, exports, and calculate net trade volume by commodity
+region_net_trade_volume <- region_imports %>%
+  full_join(region_exports, by = c("region", "Units", "scenario", "sector", "year"), suffix = c(".imports", ".exports")) %>%
+  filter(year %in% c(seq(2015, 2050, 5))) %>%
+  #Imports are negative, exports are positive
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%
+  mutate(value.imports = value.imports * -1,
+         value.exports = if_else(is.na(value.exports), 0, value.exports),
+         value.net = value.exports + value.imports)
+
+#value of net trade by commodity
+region_net_trade_value <- region_net_trade_volume %>%
+  left_join(region_import_prices, by = c("scenario", "region", "sector", "year")) %>%
+  select(-Units.x, -Units.y) %>%
+  left_join(region_export_prices, by = c("scenario", "region", "sector", "year")) %>%
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%
+  mutate(value.imports = value.imports * price.imports * 10^9 * 3.5,
+         value.exports = value.exports * price.exports * 10^9 * 3.5) %>%
+  mutate(value.net = value.exports + value.imports,
+         Units = "2015$")
+
+#total value of net trade
+region_total_net_trade_value <- region_net_trade_value %>%
+  group_by(scenario, region, year, Units) %>%
+  summarise_at( c("value.imports", "value.exports", "value.net"), sum) %>% 
+  dplyr::mutate(value = value.net,
+                Metric = 'Total Value of Net Trade') %>% 
+  dplyr::select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
+
+#value of domestic commodity
+region_domestic_value <- region_domestic %>%
+  filter(year %in% c(seq(2015, 2050, 5))) %>%
+  left_join(region_domestic_prices, by = c("scenario", "region", "sector", "year")) %>%
+  mutate(value.domestic = value * price.domestic * 10^9 * 3.5,
+         Units = "2015$") %>%
+  select(-Units.x, -Units.y, -value)
+
+#total value of domestic commodities
+region_total_domestic_value <- region_domestic_value %>%
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%
+  group_by(scenario, region, year, Units) %>%
+  dplyr::summarise(value.domestic = sum(value.domestic))
+
+#value of production by commodity
+region_production_value <- region_domestic_value %>%
+  full_join(region_net_trade_value, by = c("scenario", "region", "sector", "year", "Units")) %>%
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%
+  mutate(value.production = value.domestic + value.exports)
+
+#total value of production
+region_total_production_value <- region_production_value %>%
+  group_by(scenario, region, year, Units) %>%
+  dplyr::summarise(value.production = sum(value.production)) %>% 
+  dplyr::mutate(value = value.production,
+                Metric = 'Total Value of Production') %>% 
+  dplyr::select(scenario, region, experiment, old_scen_name, year, value, Metric, Units)
+
+# Plot
+Metrics <- rbind(as_tibble(region_total_net_trade_value),
+                 as_tibble(region_total_production_value))
+
+rdm_cart(region_total_net_trade_value, exp, export_dir)
+rdm_cart(region_total_production_value, exp, export_dir)
+
+if(!file.exists(file.path(export_dir, 'distribution', 'AgTrade'))){
+  dir.create(file.path(export_dir, 'distribution', 'AgTrade'))
+}
+#select_exps <- c('66', '82', '70', '86')
+for(i in seq(length(unique(Metrics$Metric)))){
+  M <- Metrics %>% filter(Metric %in% c(unique(Metrics$Metric)[i]))
+  plot_df <- M
+  fig_path <- file.path(export_dir, 'distribution', 'AgTrade', paste0(unique(Metrics$Metric)[i], '.png'))
+  y_lbl <- paste(M$Metric[1], ' (', M$Units[1], ')', sep = "")
+  line_plot(
+    plot_df,
+    fig_path,
+    plot_scens,
+    y_lbl = y_lbl,
+    x_lbl = x_lbl,
+    title = NULL,
+    x_min = x_min,
+    x_max = x_max,
+    legend_on = FALSE,
+    gray_ribbon = TRUE,
+    plot_by_select_experiment = FALSE,
+    distribution = TRUE
+  )
 }
 
 # Save all environmental data for post processing
