@@ -19,11 +19,13 @@ library(gcamdata)
 # then change the values consistent with Colombia's policy, then use gcamdata to just create the
 # xml so it resembles building_det.xml. This requires a unique header, which is in colombia_policy/headers_rdm.txt.
 
-base_directory <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/colombia_policy/BuildingShellEfficiency/')
+#base_directory <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/colombia_policy/BuildingShellEfficiency/')
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+base_directory <- getwd()
 
 # Read in base data (taken from Gcam data system after building). We will modify the efficiencies in the base data to
 # create a new set of assumptions and associated file.
-L244.ShellConductance_bld <- read.csv(paste0(base_directory,'L244.ShellConductance_bld.csv'), skip=1)
+L244.ShellConductance_bld <- read.csv(paste0(base_directory,'/L244.ShellConductance_bld.csv'), skip=1)
 
 L244.ShellConductance_bld.Colombia <- L244.ShellConductance_bld %>% 
   filter(region=='Colombia') %>% 

@@ -24,7 +24,9 @@ library(gcamdata)
 # the RG3 or USA files, you'd end up changing values for ALL of Latin America. This is why we are writing our own CSV
 # directly to only change values for Colombia.
 
-base_directory <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/colombia_policy/BuildingEfficiency/')
+#base_directory <- c('C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/colombia_policy/BuildingEfficiency/')
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+base_directory <- getwd()
 
 # Read in base data (taken from Gcam data system after building). We will modify the efficiencies in the base data to
 # create a new set of assumptions and associated file.
