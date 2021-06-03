@@ -1,9 +1,9 @@
 library('dplyr')
 library(gcamdata)
 
-scenario_name <- "Colombia_RPS_Low_v2"
-base_directory <- 'D:/RDM/IDB_RDM_Colombia/colombia_policy/RPS/policy_files/'
-pre_specified_adj.coef <- readr::read_csv('D:/RDM/IDB_RDM_Colombia/colombia_policy/RPS/policy_files/RPS_Low_v2_pre_specified_adj_coef.csv')
+scenario_name <- "Colombia_RPS_High_v3"
+base_directory <- 'D:/INFEWS/RDM/IDB_RDM_Colombia/levers/RPS/policy_files/'
+pre_specified_adj.coef <- readr::read_csv('D:/INFEWS/RDM/IDB_RDM_Colombia/levers/RPS/policy_files/RPS_High_pre_specified_adj_coef.csv')
 
 rps_csv_xml(scenario_name, base_directory)
 
@@ -431,7 +431,7 @@ rps_csv_xml <- function(scenario_name, base_directory, rule='linear', pre_specif
   if(file.exists(xmlpath)){
     file.remove(xmlpath)
   }
-  mi_header <- 'D:/RDM/IDB_RDM_Colombia/colombia_policy/headers_rdm.txt'
+  mi_header <- 'D:/INFEWS/RDM/IDB_RDM_Colombia/levers/headers_rdm.txt'
   gcamdata::create_xml(xmlpath, mi_header = mi_header) %>%
     gcamdata::add_xml_data(tibble::as.tibble(SecondaryOutput_NoCool), 'SecondaryOutput_NoCool', NULL) %>%
     gcamdata::add_xml_data(tibble::as.tibble(SecondaryOutput_Cool), 'SecondaryOutput_Cool', NULL) %>%
