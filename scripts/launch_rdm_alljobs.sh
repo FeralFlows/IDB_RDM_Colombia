@@ -117,7 +117,7 @@ if [[ $post_proc -eq 1 ]]; then
     PostProcDir="${repo_path}relationships/gcam/scripts/"
     PostProcFile="launch_post_processing.sh"
     PostProcFpath="$PostProcDir$PostProcFile"
-    PostProcFn="${repo_path}relationships/gcam/outputs/code/"
+    PostProcFn="${repo_path}relationships/gcam/output/code/"
     echo "sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path"
     sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path
 else
