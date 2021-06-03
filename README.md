@@ -2,6 +2,8 @@
 
 # Discovering Robust Deep Decarbonization Pathways in Colombia
 
+![images](/images/rdm_image.png)
+
 <br />
 
 <!-------------------------->
