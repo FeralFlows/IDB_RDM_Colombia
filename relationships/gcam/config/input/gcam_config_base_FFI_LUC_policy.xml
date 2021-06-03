@@ -121,7 +121,7 @@
 
        <Value name = "policy">/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input/idb_5.3/rdm/climate_policy/ddp_colombia_co2_FFI_LUC_constraint.xml</Value>
        <Value name = "policy">/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input/idb_5.3/rdm/climate_policy/ddp_other_regions_co2_constraint.xml</Value>
-       <Value name = "policy link file">/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input/idb_5.3/rdm/climate_policy/ddp_LINK.xml</Value>
+       <Value name = "policy link file">/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input/idb_5.3/rdm/climate_policy/ddp_LINK_LUC.xml</Value>
 
 		<Value name = "solver">/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input/solution/cal_broyden_config.xml</Value>
 
