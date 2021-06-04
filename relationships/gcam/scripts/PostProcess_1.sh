@@ -11,7 +11,7 @@ module load R/3.4.3
 module load java/1.8.0_31
 module load gcc/8.1.0
  
-echo 'Running Post processing script in serial'
+echo 'Running first Post processing script in serial'
 f="create_proj_file.R"
 fpath="$1$f"
 raw_outpath=$2

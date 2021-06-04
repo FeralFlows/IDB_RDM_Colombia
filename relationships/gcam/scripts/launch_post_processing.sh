@@ -26,6 +26,9 @@ module load R/3.4.3
 module load java/1.8.0_31
 module load gcc/8.1.0
 
+
+echo 'Launching post-processing meta script'
+
 # Identify input and output file locations and ensure output dirs exist
 output_sub_dir=$4
 gcam_meta_scenario=$5
@@ -39,7 +42,6 @@ gcam_dependencies=$3
 
 # Launch series of three dependent post-processing scripts
 
-echo 'Launching first post-processing script'
 f1="PostProcess_1.sh"
 fpath1="$1$f1"
 if [[ $gcam_dependencies == "None" ]]; then
@@ -51,12 +53,10 @@ else
     jid1=$(sbatch --dependency=afterany$gcam_dependencies $fpath1 $PostProcFn $raw_outpath $post_proc_outpath | sed 's/Submitted batch job //')
 fi
 
-echo 'Launching second post-processing script'
 f2="PostProcess_2.sh"
 fpath2="$1$f2"
 jid2=$(sbatch --dependency=afterany:$jid1 $fpath2 $PostProcFn $post_proc_outpath | sed 's/Submitted batch job //')
 
-echo 'Launhcing third post-processing script'
 f3="PostProcess_3.sh"
 fpath3="$1$f3"
 jid3=$(sbatch --dependency=afterany:$jid2 $fpath3 $PostProcFn $post_proc_outpath)
