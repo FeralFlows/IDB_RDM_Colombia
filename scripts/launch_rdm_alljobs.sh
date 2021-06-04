@@ -24,15 +24,15 @@
 # Step 1: User specify main assumptions
 
 # Total number of GCAM runs to perform
-#total_jobs=4096
-total_jobs=3
+total_jobs=4096
+#total_jobs=8
 echo "total number of GCAM runs to perform: $total_jobs"
 
 # Which steps to perform--generate configs, perform gcam runs, and/or
 # conduct post-processing. 0=No, 1=Yes
-gen_config=0
+gen_config=1
 run_gcam=0
-post_proc=1
+post_proc=0
 
 # Repo path, output dirs and paths, and scenario name
 repo_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/'
@@ -40,10 +40,14 @@ gcam_meta_scenario='RDM_NoPolicy'  # scenarios upon which variations will be don
 # specify a sub-dir within the meta-scenario output dir. Change this when you update 
 # runs on a new date, and want to save old runs, for example. Used for both raw and
 # post-processed outputs.
-output_sub_dir='05272021'
+output_sub_dir='06042021'
 
-# GCAM executable location. GCAM executable can be located inside or outside of the repository.
+# GCAM executable, input files, and base configuration file paths
+# Either of these can be located inside or outside of the repository.
 gcam_exe_fpath=/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/exe/
+gcam_input_dir=/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input
+base_config_file=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/config/input/gcam_config_base_FFI_LUC_policy.xml
+base_alt_xml_dir=/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input/idb_5.3/rdm/XL_category_files
 
 #-------------------------------------------------------------------------------
 # Step 2: Generate GCAM configuration files
@@ -55,7 +59,7 @@ if [[ $gen_config -eq 1 ]]; then
 	# launch script to generate config files
 	config_extension="relationships/gcam/config/scripts/gcam_config_generator.sh"
 	config_generator_path="$repo_path$config_extension"
-	jid1=$(sbatch $config_generator_path $repo_path $gcam_meta_scenario | sed 's/Submitted batch job //')
+	jid1=$(sbatch $config_generator_path $repo_path $gcam_meta_scenario $output_sub_dir $gcam_input_dir $base_config_file $base_alt_xml_dir | sed 's/Submitted batch job //')
 else
 	echo "not generating GCAM configuration files per user specifications"
 fi
@@ -66,12 +70,11 @@ fi
 jid_str=""
 if [[ $run_gcam -eq 1 ]]; then
 	# PIC has a max number of job arrays, which is currently 1000
-	#max_job_arrays=1000
-	max_job_arrays=2
+	max_job_arrays=1000
 	# Calculate the number of groups of 1000, and any remainder to be dealt with
 	separate_groups=$((total_jobs/max_job_arrays))
 	remainder=$((total_jobs%max_job_arrays))
-	echo "number of groups: $((separate_groups+remainder))"
+	echo "number of separate array-based jobs to be launched: $((separate_groups+1))"
 
 	# Declare arrays that will store run number for each batch job
 	declare -a job_array_upper
