@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario>
+    <world>
+        <region name="Colombia">
+			<supplysector name="trn_pass">
+                <tranSubsector name="Passenger Rail">
+                    <interpolation-rule apply-to="share-weight" from-year="2020" to-year="2100">
+                        <interpolation-function name="fixed"/>
+                    </interpolation-rule>
+						<share-weight year="2020">0.008</share-weight>
+						<share-weight year="2025">0.009</share-weight>
+						<share-weight year="2030">0.010</share-weight>
+						<share-weight year="2035">0.011</share-weight>
+						<share-weight year="2040">0.012</share-weight>
+						<share-weight year="2045">0.013</share-weight>
+						<share-weight fillout="1" year="2050">0.014</share-weight>
+                </tranSubsector>
+            </supplysector>
+			<supplysector name="trn_pass_road">
+                <tranSubsector name="Bus">
+                    <interpolation-rule apply-to="share-weight" from-year="2020" to-year="2100">
+                        <interpolation-function name="fixed"/>
+                    </interpolation-rule>
+						<share-weight year="2020">0.08</share-weight>
+						<share-weight year="2025">0.09</share-weight>
+						<share-weight year="2030">0.10</share-weight>
+						<share-weight year="2035">0.11</share-weight>
+						<share-weight year="2040">0.12</share-weight>
+						<share-weight year="2045">0.13</share-weight>
+						<share-weight fillout="1" year="2050">0.14</share-weight>
+                </tranSubsector>
+			</supplysector>
+		</region>
+	</world>
+</scenario>

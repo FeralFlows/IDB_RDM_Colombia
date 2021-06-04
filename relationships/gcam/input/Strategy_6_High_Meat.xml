@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario>
+    <world>
+        <region name="Colombia">
+            <supplysector name="FoodDemand_NonStaples">
+                <subsector name="Beef">
+                    <interpolation-rule apply-to="share-weight"
+						delete="1" from-year="2015" to-year="2100">
+                        <interpolation-function name="fixed"/>
+ 						<overwrite-policy warn="0">NEVER</overwrite-policy>
+                    </interpolation-rule>
+                    <share-weight year="2020">0.0985</share-weight>
+                    <share-weight year="2025">0.0985</share-weight>
+                    <share-weight year="2030">0.0985</share-weight>
+                    <share-weight year="2035">0.0985</share-weight>
+                    <share-weight year="2040">0.0985</share-weight>
+                    <share-weight year="2045">0.0985</share-weight>
+                    <share-weight year="2050">0.0985</share-weight>
+                    <share-weight year="2055">0.0985</share-weight>
+                    <share-weight year="2060">0.0985</share-weight>
+                    <share-weight year="2065">0.0985</share-weight>
+                    <share-weight year="2070">0.0985</share-weight>
+                    <share-weight year="2075">0.0985</share-weight>
+                    <share-weight year="2080">0.0985</share-weight>
+                    <share-weight year="2085">0.0985</share-weight>
+                    <share-weight year="2090">0.0985</share-weight>
+                    <share-weight year="2095">0.0985</share-weight>
+                    <share-weight year="2100">0.0985</share-weight>
+                </subsector>
+                <subsector name="Pork">
+                    <interpolation-rule apply-to="share-weight"
+						delete="1" from-year="2015" to-year="2100">
+                        <interpolation-function name="fixed"/>
+ 						<overwrite-policy warn="0">NEVER</overwrite-policy>
+                    </interpolation-rule>
+                    <share-weight year="2020">0.0855</share-weight>
+                    <share-weight year="2025">0.0855</share-weight>
+                    <share-weight year="2030">0.0855</share-weight>
+                    <share-weight year="2035">0.0855</share-weight>
+                    <share-weight year="2040">0.0855</share-weight>
+                    <share-weight year="2045">0.0855</share-weight>
+                    <share-weight year="2050">0.0855</share-weight>
+                    <share-weight year="2055">0.0855</share-weight>
+                    <share-weight year="2060">0.0855</share-weight>
+                    <share-weight year="2065">0.0855</share-weight>
+                    <share-weight year="2070">0.0855</share-weight>
+                    <share-weight year="2075">0.0855</share-weight>
+                    <share-weight year="2080">0.0855</share-weight>
+                    <share-weight year="2085">0.0855</share-weight>
+                    <share-weight year="2090">0.0855</share-weight>
+                    <share-weight year="2095">0.0855</share-weight>
+                    <share-weight year="2100">0.0855</share-weight>
+                </subsector>
+                <subsector name="Poultry">
+                    <interpolation-rule apply-to="share-weight"
+						delete="1" from-year="2015" to-year="2100">
+                        <interpolation-function name="fixed"/>
+ 						<overwrite-policy warn="0">NEVER</overwrite-policy>
+                    </interpolation-rule>
+                    <share-weight year="2020">0.1955</share-weight>
+                    <share-weight year="2025">0.1955</share-weight>
+                    <share-weight year="2030">0.1955</share-weight>
+                    <share-weight year="2035">0.1955</share-weight>
+                    <share-weight year="2040">0.1955</share-weight>
+                    <share-weight year="2045">0.1955</share-weight>
+                    <share-weight year="2050">0.1955</share-weight>
+                    <share-weight year="2055">0.1955</share-weight>
+                    <share-weight year="2060">0.1955</share-weight>
+                    <share-weight year="2065">0.1955</share-weight>
+                    <share-weight year="2070">0.1955</share-weight>
+                    <share-weight year="2075">0.1955</share-weight>
+                    <share-weight year="2080">0.1955</share-weight>
+                    <share-weight year="2085">0.1955</share-weight>
+                    <share-weight year="2090">0.1955</share-weight>
+                    <share-weight year="2095">0.1955</share-weight>
+                    <share-weight year="2100">0.1955</share-weight>
+                </subsector>
+                <subsector name="SheepGoat">
+                    <interpolation-rule apply-to="share-weight"
+						delete="1" from-year="2015" to-year="2100">
+                        <interpolation-function name="fixed"/>
+ 						<overwrite-policy warn="0">NEVER</overwrite-policy>
+                    </interpolation-rule>
+                    <share-weight year="2020">0.002</share-weight>
+                    <share-weight year="2025">0.002</share-weight>
+                    <share-weight year="2030">0.002</share-weight>
+                    <share-weight year="2035">0.002</share-weight>
+                    <share-weight year="2040">0.002</share-weight>
+                    <share-weight year="2045">0.002</share-weight>
+                    <share-weight year="2050">0.002</share-weight>
+                    <share-weight year="2055">0.002</share-weight>
+                    <share-weight year="2060">0.002</share-weight>
+                    <share-weight year="2065">0.002</share-weight>
+                    <share-weight year="2070">0.002</share-weight>
+                    <share-weight year="2075">0.002</share-weight>
+                    <share-weight year="2080">0.002</share-weight>
+                    <share-weight year="2085">0.002</share-weight>
+                    <share-weight year="2090">0.002</share-weight>
+                    <share-weight year="2095">0.002</share-weight>
+                    <share-weight year="2100">0.002</share-weight>
+                </subsector>
+                <subsector name="OtherMeat_Fish">
+                    <interpolation-rule apply-to="share-weight"
+						delete="1" from-year="2015" to-year="2100">
+                        <interpolation-function name="fixed"/>
+ 						<overwrite-policy warn="0">NEVER</overwrite-policy>
+                    </interpolation-rule>
+                    <share-weight year="2020">0.07</share-weight>
+                    <share-weight year="2025">0.07</share-weight>
+                    <share-weight year="2030">0.07</share-weight>
+                    <share-weight year="2035">0.07</share-weight>
+                    <share-weight year="2040">0.07</share-weight>
+                    <share-weight year="2045">0.07</share-weight>
+                    <share-weight year="2050">0.07</share-weight>
+                    <share-weight year="2055">0.07</share-weight>
+                    <share-weight year="2060">0.07</share-weight>
+                    <share-weight year="2065">0.07</share-weight>
+                    <share-weight year="2070">0.07</share-weight>
+                    <share-weight year="2075">0.07</share-weight>
+                    <share-weight year="2080">0.07</share-weight>
+                    <share-weight year="2085">0.07</share-weight>
+                    <share-weight year="2090">0.07</share-weight>
+                    <share-weight year="2095">0.07</share-weight>
+                    <share-weight year="2100">0.07</share-weight>
+                </subsector>
+        </supplysector>
+        </region>
+    </world>
+</scenario>
