@@ -44,61 +44,36 @@ L244.StubTechEff_bld.Colombia_FNL <- data.frame("region" = character(), 'supplys
                                                 'minicam.energy.input' = character(), 'efficiency' = numeric(),
                                                 'market.name' = character()
                                                 )  # Create base data frame
-# improvement.rate.2030 <- 0.22/(2030-2015)
-# improvement.rate.2050 <- (0.26-0.22)/(2050-2030)
 
-# Assumption 1: Assume an average annual change rate of 0.015, so the value in 2050 will be
-# Value_2050 = Value_2015 * (1 + 0.015)^(2050-2015)
-# The improvement rate in 2050 = (1.015^(2050-2015) - 1)/(2050-2015)
-# Assumption 2: Assume reaching 4.38 by 2050 for comm cooling electricity
-# Value_2015 for comm cooling electricity = 2.5651377
-# The improvement rate in 2050 = (4.38/2.5651377-1)/(2050-2015)
-improvement.rate.2050 <- (4.38/2.5651377-1)/(2050-2015)
-for (supply_sector in names(supplysectors)){
-  for(sub_sector in supplysectors[[supply_sector]]){
-    L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia_INI %>%
-      filter(supplysector==supply_sector, subsector==sub_sector)
-  # Get 2015 values since policy defined in terms of percentage decline from 2015
-    appl.eff.2015.Col <- (L244.StubTechEff_bld.Colombia %>% 
-                            filter(year==2015))$efficiency
-    L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia %>% 
-      mutate(efficiency.new = if_else(year<=2015, 
-                                      efficiency,
-                                      (1+(year-2015)*improvement.rate.2050)*appl.eff.2015.Col))
-    # Deal first with portion through 2030
-    # L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia %>% 
-    #   mutate(efficiency.new = if_else(year<=2015, 
-    #                                   efficiency,
-    #                                   if_else(year<=2030, 
-    #                                           (1+(year-2015)*improvement.rate.2030)*appl.eff.2015.Col, 
-    #                                           efficiency)))
-    # Grab 2030 values for comm and resid, then project through 2050 using that.
-    # appl.eff.2030.Col <- (L244.StubTechEff_bld.Colombia %>% 
-    #                         filter(year==2030))$efficiency.new
-    # L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia %>% 
-    #   mutate(efficiency.new = if_else(year<=2030, 
-    #                                   efficiency.new,
-    #                                   (1+(year-2030)*improvement.rate.2050)*appl.eff.2030.Col))
+# Decide improvement rate
+# New Assumption: improvement rate doubles by 2050 comparing to the Base
+# For example, improvement rate = [2*(Base_2050 - Base_2015)/Base_2015]/(2050 - 2015)
+# Note, for different sectors, the improvement rate will be different due to different base values
+start_year <- 2015
+end_year <- 2050
+BldgAppEff_high <- L244.StubTechEff_bld.Colombia_INI %>%
+  dplyr::filter((supplysector %in% c('comm others', 'resid others', 'comm heating', 'resid heating') &
+                   subsector %in% c('electricity', 'gas')) |
+                  (supplysector %in% c('comm cooling', 'resid cooling') &
+                     subsector %in% c('electricity'))) %>% 
+  dplyr::group_by(supplysector, subsector, stub.technology) %>% 
+  dplyr::mutate(value.start= efficiency[year == start_year],
+                value.end = efficiency[year == end_year],
+                improvement.rate = 1 + (2*(value.end - value.start)/value.start)/(end_year-start_year)*(year - start_year),
+                efficiency.new = if_else(year >= start_year, value.start * improvement.rate, efficiency)) %>% 
+  dplyr::select(-value.start, -value.end, -improvement.rate)
 
-    if(!sub_sector %in% c('electricity')){
-      # Heating can have efficiency > 1 so don't reset it.
-      L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia %>% 
-        mutate(efficiency.new=if_else(efficiency.new>1,1,efficiency.new))
-    }
-    # if(supply_sector %in% c('resid heating', 'comm heating', 'resid others', 'comm others')){
-    #   # Heating can have efficiency > 1 so don't reset it.
-    #   L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia %>% 
-    #     mutate(efficiency=if_else(efficiency>1,1,efficiency))
-    # }
-    L244.StubTechEff_bld.Colombia_FNL <- rbind(L244.StubTechEff_bld.Colombia_FNL, L244.StubTechEff_bld.Colombia)
-  }
-}
+L244.StubTechEff_bld.Colombia_FNL <- BldgAppEff_high %>% 
+  dplyr::mutate(efficiency.new = if_else(!subsector %in% 'electricity',
+                                         if_else(efficiency.new > 1, 1, efficiency.new),
+                                         efficiency.new))
 
-write.csv(L244.StubTechEff_bld.Colombia_FNL, 'L244.StubTechEff_bld.Colombia_FNL.csv')
+write.csv(L244.StubTechEff_bld.Colombia_FNL, 'L244.StubTechEff_bld.Colombia_FNL_Plot.csv', row.names = FALSE)
 L244.StubTechEff_bld.Colombia_FNL <- L244.StubTechEff_bld.Colombia_FNL %>% 
   select(-efficiency) %>% 
   rename(efficiency = efficiency.new)
 L244.StubTechEff_bld.Colombia_FNL <- L244.StubTechEff_bld.Colombia_FNL[c(1,2,3,4,5,6,8,7)]
+
 
 # Auto-produce XML from CSV
 L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia_FNL
@@ -110,3 +85,63 @@ mi_header <- file.path('..', 'headers_rdm.txt')
 gcamdata::create_xml(xmlpath, mi_header = mi_header) %>%
   gcamdata::add_xml_data(imported_data, gcamdata_variable, NULL) %>%
   gcamdata::run_xml_conversion()
+
+
+# ============================== Not in Use =================================
+if(F){
+  # improvement.rate.2030 <- 0.22/(2030-2015)
+  # improvement.rate.2050 <- (0.26-0.22)/(2050-2030)
+  
+  # Assumption 1: Assume an average annual change rate of 0.015, so the value in 2050 will be
+  # Value_2050 = Value_2015 * (1 + 0.015)^(2050-2015)
+  # The improvement rate in 2050 = (1.015^(2050-2015) - 1)/(2050-2015)
+  # Assumption 2: Assume reaching 4.38 by 2050 for comm cooling electricity
+  # Value_2015 for comm cooling electricity = 2.5651377
+  # The improvement rate in 2050 = (4.38/2.5651377-1)/(2050-2015)
+  improvement.rate.2050 <- (4.38/2.5651377-1)/(2050-2015)
+  for (supply_sector in names(supplysectors)){
+    for(sub_sector in supplysectors[[supply_sector]]){
+      L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia_INI %>%
+        filter(supplysector==supply_sector, subsector==sub_sector)
+      # Get 2015 values since policy defined in terms of percentage decline from 2015
+      appl.eff.2015.Col <- (L244.StubTechEff_bld.Colombia %>% 
+                              filter(year==2015))$efficiency
+      L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia %>% 
+        mutate(efficiency.new = if_else(year<=2015, 
+                                        efficiency,
+                                        (1+(year-2015)*improvement.rate.2050)*appl.eff.2015.Col))
+      # Deal first with portion through 2030
+      # L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia %>% 
+      #   mutate(efficiency.new = if_else(year<=2015, 
+      #                                   efficiency,
+      #                                   if_else(year<=2030, 
+      #                                           (1+(year-2015)*improvement.rate.2030)*appl.eff.2015.Col, 
+      #                                           efficiency)))
+      # Grab 2030 values for comm and resid, then project through 2050 using that.
+      # appl.eff.2030.Col <- (L244.StubTechEff_bld.Colombia %>% 
+      #                         filter(year==2030))$efficiency.new
+      # L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia %>% 
+      #   mutate(efficiency.new = if_else(year<=2030, 
+      #                                   efficiency.new,
+      #                                   (1+(year-2030)*improvement.rate.2050)*appl.eff.2030.Col))
+      
+      if(!sub_sector %in% c('electricity')){
+        # Heating can have efficiency > 1 so don't reset it.
+        L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia %>% 
+          mutate(efficiency.new=if_else(efficiency.new>1,1,efficiency.new))
+      }
+      # if(supply_sector %in% c('resid heating', 'comm heating', 'resid others', 'comm others')){
+      #   # Heating can have efficiency > 1 so don't reset it.
+      #   L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia %>% 
+      #     mutate(efficiency=if_else(efficiency>1,1,efficiency))
+      # }
+      L244.StubTechEff_bld.Colombia_FNL <- rbind(L244.StubTechEff_bld.Colombia_FNL, L244.StubTechEff_bld.Colombia)
+    }
+  }
+  
+  write.csv(L244.StubTechEff_bld.Colombia_FNL, 'L244.StubTechEff_bld.Colombia_FNL.csv')
+  L244.StubTechEff_bld.Colombia_FNL <- L244.StubTechEff_bld.Colombia_FNL %>% 
+    select(-efficiency) %>% 
+    rename(efficiency = efficiency.new)
+  L244.StubTechEff_bld.Colombia_FNL <- L244.StubTechEff_bld.Colombia_FNL[c(1,2,3,4,5,6,8,7)]
+}
