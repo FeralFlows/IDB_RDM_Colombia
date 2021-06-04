@@ -16,9 +16,16 @@ echo 'Library config:'
 echo "SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
 ldd ./gcam.exe
 
+# Indicate where GCAM outputs will be placed.
+output_sub_dir=$3
+gcam_meta_scenario=$4
+raw_outpath="${repo_path}relationships/gcam/output/raw/${gcam_meta_scenario}/${output_sub_dir}/"
+# ensure output dir exists to avoid errors
+mkdir -p $raw_outpath
+
 # Identify GCAM config files for which GCAM runs will be performed
 repo_path=$1
-config_extension="relationships/gcam/config/output/xml/*.xml"
+config_extension="relationships/gcam/config/output/xml/$gcam_meta_scenario/$output_sub_dir/*.xml"
 CONFIG_FILES_PATH="$repo_path$config_extension"
 FILES=($CONFIG_FILES_PATH)
 
@@ -29,13 +36,6 @@ FILE=${FILES[$FILE_INDEX]}
 echo "Adjusted Task ID: $NEW_TASK_ID"
 echo "GCAM Config. File Index: $FILE_INDEX"
 echo "GCAM Config. File Name: $FILE"
-
-# Indicate where GCAM outputs will be placed.
-output_sub_dir=$3
-gcam_meta_scenario=$4
-raw_outpath='${repo_path}relationships/gcam/output/raw/${gcam_meta_scenario}/${output_sub_dir}/'
-# ensure output dir exists to avoid errors
-mkdir -p $raw_outpath
 
 # Specify location of gcam executable and other relevant files
 gcam_exe_fpath=$5  # path to gcam executable

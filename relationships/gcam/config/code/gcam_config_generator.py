@@ -26,7 +26,8 @@ def indent(elem, level=0):
             elem.tail = i
 
 
-def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir, output_dir, XL_fac, XL_cat):
+def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir, output_dir, output_sub_dir, XL_fac,
+         XL_cat):
     ''' Generate GCAM config files for use in Scenario Discovery and RDM experiments.
     :param scenarios: list of strings of scenario names
     :type scenarios: list of str
@@ -38,6 +39,8 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
     :type base_config_file: str
     :param output_dir: path where output files will be placed
     :type output_dir: str
+    :param output_sub_dir: name of any sub-directory (e.g., a date like '04052021') to store xml in
+    :type output_sub_dir: str
     '''
 
 
@@ -100,7 +103,10 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
                     factor_levels_list[exp][fac_num]
                 DOE_DF.iloc[scenario_counter * num_experiments + exp].experiment = exp
         # Save XLRM Design of Experiment sheet
-        DOE_DF.to_csv(os.path.join(output_dir, 'doe', 'DOE_XLRM_' + gcam_scen + '.csv'), index=False)
+        csv_dir_path=os.path.join(output_dir, 'doe', gcam_scen, output_sub_dir)
+        if not os.path.exists(csv_dir_path):
+            os.makedirs(csv_dir_path)
+        DOE_DF.to_csv(os.path.join(csv_dir_path, 'DOE_XLRM_' + gcam_scen + '.csv'), index=False)
         scenario_counter += 1
         # convert list of tuples to list of lists
         for tup in range(len(factor_file_list_orig)):
@@ -130,7 +136,10 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
                 factor_file_list_orig2[row][column].attrib = {'name':'uncertainty_combination_elem'+str(column)}
                 factor_file_list_orig2[row][column].text = factor_file_list_orig[row][column] # + '\n'
             root[0][4].text = '../../output/FinalRuns/IDB_RDM/uncertainty_' + scen  # Change output database location
-            xml_text = os.path.join(output_dir, 'xml', gcam_scen + '_' + scen + '.xml')
+            xml_dir_path = os.path.join(output_dir, 'xml', gcam_scen, output_sub_dir)
+            if not os.path.exists(xml_dir_path):
+                os.makedirs(xml_dir_path)
+            xml_text = os.path.join(xml_dir_path, gcam_scen + '_' + scen + '.xml')
             # parser = etree.XMLParser(remove_blank_text=True)
             indent(root)
             tree.write(xml_text)  # , pretty_print = True
@@ -152,6 +161,8 @@ if __name__ == '__main__':
     parser.add_argument('--base_alt_xml_dir',type=str,
                         help='see gcam_config_generator.py main() function docstring')
     parser.add_argument('--output_dir', type=str,
+                        help='see gcam_config_generator.py main() function docstring')
+    parser.add_argument('--output_sub_dir', type=str,
                         help='see gcam_config_generator.py main() function docstring')
 
     args = parser.parse_args()
@@ -193,4 +204,4 @@ if __name__ == '__main__':
               'Uncertainty_6_High': ['HOV-CL']
               }
     main(args.scenarios, args.base_dir, args.base_gcam_dir, args.base_config_file, args.base_alt_xml_dir,
-         args.output_dir, XL_fac, XL_cat)
+         args.output_dir, args.output_sub_dir, XL_fac, XL_cat)
