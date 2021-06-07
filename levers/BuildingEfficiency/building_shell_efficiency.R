@@ -83,7 +83,7 @@ L244.ShellConductance_bld.Colombia <- L244.ShellConductance_bld.Colombia %>%
 # Auto-produce XML from CSV
 gcamdata_variable <- "Bldg_ShellEff" #  "AgProdChange"
 imported_data <- tibble::as.tibble(L244.ShellConductance_bld.Colombia)
-xmlpath <- file.path(base_directory, 'Bldg_ShellEff.xml')
+xmlpath <- file.path(base_directory, 'Bldg_ShellEff_High.xml')
 # mi_header <- 'C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/colombia_policy/headers_rdm.txt'
 mi_header <- file.path('..', 'headers_rdm.txt')
 gcamdata::create_xml(xmlpath, mi_header = mi_header) %>%

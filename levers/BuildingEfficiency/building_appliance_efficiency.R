@@ -79,7 +79,7 @@ L244.StubTechEff_bld.Colombia_FNL <- L244.StubTechEff_bld.Colombia_FNL[c(1,2,3,4
 L244.StubTechEff_bld.Colombia <- L244.StubTechEff_bld.Colombia_FNL
 gcamdata_variable <- "Bldg_Appliance_Eff" #  "AgProdChange"
 imported_data <- tibble::as_tibble(L244.StubTechEff_bld.Colombia)
-xmlpath <- file.path(base_directory, 'Bldg_Appliance_Eff.xml')
+xmlpath <- file.path(base_directory, 'Bldg_Appliance_Eff_High.xml')
 # mi_header <- 'C:/Users/twild/all_git_repositories/IDB_RDM_Colombia/colombia_policy/headers_rdm.txt'
 mi_header <- file.path('..', 'headers_rdm.txt')
 gcamdata::create_xml(xmlpath, mi_header = mi_header) %>%
