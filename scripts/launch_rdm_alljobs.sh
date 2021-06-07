@@ -24,30 +24,30 @@
 # Step 1: User specify main assumptions
 
 # Total number of GCAM runs to perform
-total_jobs=4096
-#total_jobs=8
+#total_jobs=4096
+total_jobs=2
 echo "total number of GCAM runs to perform: $total_jobs"
 
 # Which steps to perform--generate configs, perform gcam runs, and/or
 # conduct post-processing. 0=No, 1=Yes
-gen_config=1
-run_gcam=0
-post_proc=0
+gen_config=0
+run_gcam=1
+post_proc=1
 
 # Repo path, output dirs and paths, and scenario name
 repo_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/'
-gcam_meta_scenario='RDM_NoPolicy'  # scenarios upon which variations will be done.
+gcam_meta_scenario='RDM_Policy'  # scenarios upon which variations will be done.
 # specify a sub-dir within the meta-scenario output dir. Change this when you update 
 # runs on a new date, and want to save old runs, for example. Used for both raw and
 # post-processed outputs.
-output_sub_dir='06042021'
+output_sub_dir='06062021'
 
 # GCAM executable, input files, and base configuration file paths
 # Either of these can be located inside or outside of the repository.
 gcam_exe_fpath=/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/exe/
 gcam_input_dir=/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input
 base_config_file=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/config/input/gcam_config_base_FFI_LUC_policy.xml
-base_alt_xml_dir=/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input/idb_5.3/rdm/XL_category_files
+base_alt_xml_dir=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/input
 
 #-------------------------------------------------------------------------------
 # Step 2: Generate GCAM configuration files
@@ -62,6 +62,7 @@ if [[ $gen_config -eq 1 ]]; then
 	jid1=$(sbatch $config_generator_path $repo_path $gcam_meta_scenario $output_sub_dir $gcam_input_dir $base_config_file $base_alt_xml_dir | sed 's/Submitted batch job //')
 else
 	echo "not generating GCAM configuration files per user specifications"
+	jid1='None'
 fi
 #-------------------------------------------------------------------------------------
 #
@@ -104,8 +105,13 @@ if [[ $run_gcam -eq 1 ]]; then
 		arr_lower="1-"
 		arr_upper="$arr"
 		arr_string="$arr_lower$arr_upper"
-		echo "sbatch --array=$arr_string --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
-		jid_n=$(sbatch --array=$arr_string --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
+		if [[ $jid1 == "None" ]]; then
+			echo "sbatch --array=$arr_string $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
+			jid_n=$(sbatch --array=$arr_string $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
+		else
+			echo "sbatch --array=$arr_string --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
+			jid_n=$(sbatch --array=$arr_string --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
+		fi
 		jid_str="$jid_str:$jid_n"
 		count=$((count+1))
 	done
