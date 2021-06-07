@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
     XL_cat = {'Strategy_1_High': ['RPS', 'Nuclear'],
               'Strategy_1_Low': ['RPS', 'Nuclear'],
-              'Strategy_2_High': ['BldEE', 'IndEE'],
+              'Strategy_2_High': ['BldShellEE', 'BldApplEE', 'IndEE'],
               'Strategy_3_High': ['ElecTrans'],
               'Strategy_4_High': ['PublicTrans'],
               'Strategy_4_Low': ['PublicTrans'],
