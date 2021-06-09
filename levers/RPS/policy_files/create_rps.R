@@ -1,9 +1,9 @@
 library('dplyr')
 library(gcamdata)
 
-scenario_name <- "Colombia_RPS_High_v3"
+scenario_name <- "Colombia_RPS_Low_v4"
 base_directory <- 'D:/INFEWS/RDM/IDB_RDM_Colombia/levers/RPS/policy_files/'
-pre_specified_adj.coef <- readr::read_csv('D:/INFEWS/RDM/IDB_RDM_Colombia/levers/RPS/policy_files/RPS_High_pre_specified_adj_coef.csv')
+pre_specified_adj.coef <- readr::read_csv('D:/INFEWS/RDM/IDB_RDM_Colombia/levers/RPS/policy_files/RPS_Low_pre_specified_adj_coef.csv')
 
 rps_csv_xml(scenario_name, base_directory)
 
