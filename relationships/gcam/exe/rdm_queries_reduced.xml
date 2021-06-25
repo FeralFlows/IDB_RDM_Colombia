@@ -228,7 +228,7 @@
 	</aQuery>
 
 <aQuery>
-       <region name="Colombia" />
+		<all-regions/>
          <supplyDemandQuery title="primary energy consumption by region (avg fossil efficiency)">
             <axis1 name="fuel">input[@name]</axis1>
             <axis2 name="Year">demand-physical[@vintage]</axis2>
