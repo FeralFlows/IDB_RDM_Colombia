@@ -1,9 +1,10 @@
 #!/bin/bash
 #SBATCH -A br21_wild566
-#SBATCH -t 360
+#SBATCH -t 600
 #SBATCH -p shared,slurm -N 1 --cpus-per-task 3
-#SBATCH --output=./stdout/%A.%a.out
-#SBATCH --error=./stdout/%A.%a.err
+
+##SBATCH --output="./stdout/$6.%A.%a.out"
+##SBATCH --error=./stdout/%A.%a.err
 
 module purge
 module load git

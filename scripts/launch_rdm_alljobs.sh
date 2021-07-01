@@ -25,7 +25,7 @@
 
 # Total number of GCAM runs to perform
 #total_jobs=4096
-total_jobs=2
+total_jobs=10
 echo "total number of GCAM runs to perform: $total_jobs"
 
 # Which steps to perform--generate configs, perform gcam runs, and/or
@@ -37,10 +37,13 @@ post_proc=1
 # Repo path, output dirs and paths, and scenario name
 repo_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/'
 gcam_meta_scenario='RDM_Policy'  # scenarios upon which variations will be done.
+#gcam_meta_scenario='RDM_NoPolicy'  # scenarios upon which variations will be done.
 # specify a sub-dir within the meta-scenario output dir. Change this when you update 
 # runs on a new date, and want to save old runs, for example. Used for both raw and
 # post-processed outputs.
-output_sub_dir='06062021'
+output_sub_dir='06212021_cprice'
+#output_sub_dir='06252021_no_cprice'
+slurmoutname="./stdout/${gcam_meta_scenario}.${output_sub_dir}.%A.%a.out"
 
 # GCAM executable, input files, and base configuration file paths
 # Either of these can be located inside or outside of the repository.
@@ -106,11 +109,11 @@ if [[ $run_gcam -eq 1 ]]; then
 		arr_upper="$arr"
 		arr_string="$arr_lower$arr_upper"
 		if [[ $jid1 == "None" ]]; then
-			echo "sbatch --array=$arr_string $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
-			jid_n=$(sbatch --array=$arr_string $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
+			echo "sbatch --array=$arr_string --output=$slurmoutname $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
+			jid_n=$(sbatch --array=$arr_string --output=$slurmoutname $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
 		else
 			echo "sbatch --array=$arr_string --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
-			jid_n=$(sbatch --array=$arr_string --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
+			jid_n=$(sbatch --array=$arr_string --output=$slurmoutname --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
 		fi
 		jid_str="$jid_str:$jid_n"
 		count=$((count+1))
