@@ -6,6 +6,7 @@ library(dplyr)
 library(tidyr)
 library(foreach)
 library(gcamdata)
+library(stringr)
 
 # This script creates a single .xml file to improve commercial and residential building appliance efficiency in Colombia. 
 
@@ -60,17 +61,90 @@ BldgAppEff_high <- L244.StubTechEff_bld.Colombia_INI %>%
   dplyr::mutate(value.start= efficiency[year == start_year],
                 value.end = efficiency[year == end_year],
                 improvement.rate = 1 + (2*(value.end - value.start)/value.start)/(end_year-start_year)*(year - start_year),
-                efficiency.new = if_else(year >= start_year, value.start * improvement.rate, efficiency)) %>% 
-  dplyr::select(-value.start, -value.end, -improvement.rate)
+                efficiency.new = if_else(year >= start_year, value.start * improvement.rate, efficiency))
 
 L244.StubTechEff_bld.Colombia_FNL <- BldgAppEff_high %>% 
   dplyr::mutate(efficiency.new = if_else(!subsector %in% 'electricity',
                                          if_else(efficiency.new > 1, 1, efficiency.new),
                                          efficiency.new))
 
-write.csv(L244.StubTechEff_bld.Colombia_FNL, 'L244.StubTechEff_bld.Colombia_FNL_Plot.csv', row.names = FALSE)
+# Plot -------------------------------------------------------------------------
+df_plot <- L244.StubTechEff_bld.Colombia_FNL %>% 
+  dplyr::ungroup() %>% 
+  dplyr::mutate(High = (improvement.rate-1) * 100,
+                Low = (efficiency - value.start)/value.start * 100) %>% 
+  dplyr::select(supplysector, subsector, stub.technology, year, High, Low) %>% 
+  tidyr::gather(key = 'improvement.pct', value = 'value', c('High', 'Low')) %>% 
+  dplyr::mutate(group = str_to_title(paste0(improvement.pct, ' Efficiency - ', stub.technology)),
+                period = as.numeric(year)) %>% 
+  dplyr::select(supplysector, subsector, stub.technology, period, group, value) %>% 
+  as.data.frame()
+
+line_plot <- function(df_plot, cat, supplysector){
+  
+  df <- df_plot %>% 
+    dplyr::filter(supplysector %in% cat, period %in% seq(start_year, end_year, by = 5))
+  
+  title_name <- str_to_title(paste0(supplysector, ' - ', cat))
+  stub_length <- length(unique(df$stub.technology))
+  if(stub_length == 2){
+    color_pattern <- c('royalblue', 'royalblue', 'chocolate1', 'chocolate1')
+    line_pattern <- c('solid', 'dashed', 'solid', 'dashed')
+  } else {
+    color_pattern <- c('royalblue', 'chocolate1')
+    line_pattern <- c('solid', 'solid')
+  }
+  
+  P <- ggplot(df, aes(x = period, y = value, group = group)) +
+    geom_line(aes(linetype = group, color = group), size=1) +
+    geom_point(aes(fill = group), shape=21, color="black", size=3, stroke=1.5) +
+    scale_fill_manual(values = color_pattern) +
+    scale_colour_manual(values = color_pattern) +
+    scale_linetype_manual(values = line_pattern) +
+    labs(x = NULL,
+         y = 'Percent Change Relative to 2015 (%)',
+         title = title_name) +
+    guides(fill = guide_legend(ncol = 2)) +
+    theme(
+      title = element_text(size = 16),
+      panel.background = element_blank(),
+      panel.border = element_rect(colour = 'black', fill = NA, size = 1.2),
+      panel.grid.major.x = element_line(colour = 'grey'),
+      panel.grid.minor.x = element_line(colour = 'grey'),
+      axis.text = element_text(colour = 'black', size = 14),
+      axis.title = element_text(size = 14),
+      strip.background = element_rect(fill = NA),
+      strip.placement = 'outside',
+      legend.position = 'bottom',
+      legend.box = 'horizontal',
+      legend.background = element_blank(),
+      legend.key = element_blank(),
+      legend.key.width = unit(2,'cm'),
+      legend.box.margin = margin(t=0, r=0,b=0,l=-30,unit='pt'),
+      legend.margin = margin(0,0,0,0),
+      legend.title = element_blank(),
+      legend.text = element_text(size = 12),
+      axis.ticks = element_line(size = 1.2),
+      plot.margin = margin(t = 0, r = 20, b = 0, l = 0),
+    )
+  P
+  save_path <- file.path(getwd(), 'figures')
+  if(!file.exists(save_path)){
+    dir.create(save_path)
+  }
+  ggsave(file.path(save_path, paste0(title_name, '.png')), height = 4.5, width = 7, unit = 'in', dpi = 600)
+}
+# unique(df_plot$supplysector)
+line_plot(df_plot, 'comm cooling', 'Building Appliance Efficiency')
+line_plot(df_plot, 'comm heating', 'Building Appliance Efficiency')
+line_plot(df_plot, 'comm others', 'Building Appliance Efficiency')
+line_plot(df_plot, 'resid cooling', 'Building Appliance Efficiency')
+line_plot(df_plot, 'resid heating', 'Building Appliance Efficiency')
+line_plot(df_plot, 'resid others', 'Building Appliance Efficiency')
+
+# Format -----------------------------------------------------------------------
 L244.StubTechEff_bld.Colombia_FNL <- L244.StubTechEff_bld.Colombia_FNL %>% 
-  select(-efficiency) %>% 
+  dplyr::select(-value.start, -value.end, -improvement.rate, -efficiency) %>% 
   rename(efficiency = efficiency.new)
 L244.StubTechEff_bld.Colombia_FNL <- L244.StubTechEff_bld.Colombia_FNL[c(1,2,3,4,5,6,8,7)]
 

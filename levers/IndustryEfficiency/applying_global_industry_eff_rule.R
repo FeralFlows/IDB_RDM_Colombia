@@ -7,6 +7,7 @@ library(tidyr)
 library(foreach)
 library(gcamdata)
 library(data.table)
+library(stringr)
 
 
 # This script creates a single .csv file to increase industrial efficiency. It applies a simple function that improves
@@ -57,23 +58,102 @@ if(rebuild_Base){
 # create a new set of assumptions and associated file.
 data <- read.csv(file.path(base_directory,'IndustrialStubTechEff_Base.csv'), skip=4)
 
-# Decide improvement rate
-# New Assumption: improvement rate doubles by 2050 comparing to the Base
-# For example, improvement rate = [2*(Base_2050 - Base_2015)/Base_2015]/(2050 - 2015)
-# Note, for different sectors, the improvement rate will be different due to different base values
+
+# Current Assumption -----------------------------------------------------------
+# Percent increase in 2050 relative to 2015:
+# Hydrogen - 20% increase
+# Biomass and Electricity - 10% increase
+# Other bulk fuel (gas, coal, refined liquids) - 5% increase
 start_year <- 2015
 end_year <- 2050
+
 IndEE_high <- data %>%
   dplyr::group_by(stub.technology) %>% 
   dplyr::mutate(value.start= efficiency[period == start_year],
                 value.end = efficiency[period == end_year],
-                improvement.rate = 1 + (2*(value.end - value.start)/value.start)/(end_year-start_year)*(period - start_year),
-                efficiency.new = if_else(period >= start_year, value.start * improvement.rate, efficiency)) %>% 
+                improvement.rate = if_else(subsector %in% c('hydrogen'), 0.2,
+                                           if_else(subsector %in% c('biomass', 'electricity'), 0.1, 0.05)),
+                improvement.rate = 1 + improvement.rate/(end_year-start_year)*(period - start_year),
+                efficiency.new = if_else(period >= start_year, value.start * improvement.rate, efficiency))
+
+
+# Plot -------------------------------------------------------------------------
+df_plot <- IndEE_high %>% 
+  dplyr::mutate(High = (improvement.rate-1) * 100,
+                Low = (efficiency - value.start)/value.start * 100) %>% 
+  dplyr::select(subsector, stub.technology, period, High, Low) %>% 
+  tidyr::gather(key = 'improvement.pct', value = 'value', c('High', 'Low')) %>% 
+  dplyr::mutate(group = str_to_title(paste0(improvement.pct, ' Efficiency - ', stub.technology)),
+                period = as.numeric(period)) %>% 
+  as.data.frame()
+
+line_plot <- function(df_plot, subsector_i, supplysector){
+  
+  df <- df_plot %>% 
+    dplyr::filter(subsector %in% subsector_i, period %in% seq(start_year, end_year, by = 5))
+  
+  title_name <- str_to_title(paste0(supplysector, ' - ', subsector_i))
+  stub_length <- length(unique(df$stub.technology))
+  if(stub_length == 2){
+    color_pattern <- c('royalblue', 'royalblue', 'chocolate1', 'chocolate1')
+    line_pattern <- c('solid', 'dashed', 'solid', 'dashed')
+  } else {
+    color_pattern <- c('royalblue', 'chocolate1')
+    line_pattern <- c('solid', 'solid')
+  }
+  
+  P <- ggplot(df, aes(x = period, y = value, group = group)) +
+    geom_line(aes(linetype = group, color = group), size=1) +
+    geom_point(aes(fill = group), shape=21, color="black", size=3, stroke=1.5) +
+    scale_fill_manual(values = color_pattern) +
+    scale_colour_manual(values = color_pattern) +
+    scale_linetype_manual(values = line_pattern) +
+    labs(x = NULL,
+         y = 'Percent Change Relative to 2015 (%)',
+         title = title_name) +
+    guides(fill = guide_legend(ncol = 2)) +
+    theme(
+      title = element_text(size = 16),
+      panel.background = element_blank(),
+      panel.border = element_rect(colour = 'black', fill = NA, size = 1.2),
+      panel.grid.major.x = element_line(colour = 'grey'),
+      panel.grid.minor.x = element_line(colour = 'grey'),
+      axis.text = element_text(colour = 'black', size = 14),
+      axis.title = element_text(size = 14),
+      strip.background = element_rect(fill = NA),
+      strip.placement = 'outside',
+      legend.position = 'bottom',
+      legend.box = 'horizontal',
+      legend.background = element_blank(),
+      legend.key = element_blank(),
+      legend.key.width = unit(2,'cm'),
+      legend.box.margin = margin(t=0, r=0,b=0,l=-30,unit='pt'),
+      legend.margin = margin(0,0,0,0),
+      legend.title = element_blank(),
+      legend.text = element_text(size = 12),
+      axis.ticks = element_line(size = 1.2),
+      plot.margin = margin(t = 0, r = 20, b = 0, l = 0),
+    )
+  P
+  save_path <- file.path(getwd(), 'figures')
+  if(!file.exists(save_path)){
+    dir.create(save_path)
+  }
+  ggsave(file.path(save_path, paste0(title_name, '.png')), height = 4.5, width = 7, unit = 'in', dpi = 600)
+}
+
+line_plot(df_plot, 'biomass', 'Industrial Efficiency')
+line_plot(df_plot, 'electricity', 'Industrial Efficiency')
+line_plot(df_plot, 'hydrogen', 'Industrial Efficiency')
+line_plot(df_plot, 'coal', 'Industrial Efficiency')
+line_plot(df_plot, 'gas', 'Industrial Efficiency')
+line_plot(df_plot, 'refined liquids', 'Industrial Efficiency')
+
+
+# Merge new efficiencies -------------------------------------------------------
+# (which only apply to future years) with historical efficiencies
+IndEE_high <- IndEE_high %>% 
   dplyr::select(-value.start, -value.end, -improvement.rate)
-
-write.csv(IndEE_high, 'IndEE_Plot.csv', row.names = FALSE)
-
-#merge new efficiencies (which only apply to future years) with historical efficiencies
 output <- data %>% 
   left_join(IndEE_high %>% select(-efficiency), 
             by=c('region', 'supplysector', 'subsector', 'stub.technology', 'period', 'minicam.energy.input', 
@@ -83,7 +163,7 @@ output <- data %>%
 desired_output_column_order <- names(data)
 output <- output[desired_output_column_order]  # Reorder coluns to order required by header
 
-# Write top column labels required as proper formatting to create XML
+# Write top column labels required as proper formatting to create XML ----------
 output_file <- file.path(base_directory, 'IndustrialStubTechEff_High.csv')
 if(file.exists(output_file)){
   file.remove(output_file)
@@ -123,7 +203,7 @@ write.table(output, output_file,
             append=TRUE,
             quote=FALSE)
 
-# Auto-produce XML from CSV
+# Auto-produce XML from CSV ----------------------------------------------------
 gcamdata_variable <- "StubTechEff" #  "AgProdChange"
 imported_data <- tibble::as_tibble(read.csv(output_file, skip = 4, stringsAsFactors = F)) %>% 
   rename(year=period)
@@ -149,3 +229,19 @@ gcamdata::create_xml(xmlpath, mi_header = mi_header) %>%
 #   mutate(efficiency_improvement = 0.3 + (period-official_policy_begin_yr)*eff_rate_policy) %>% 
 #   mutate(new_efficiency = efficiency*(1 + efficiency_improvement)) %>% 
 #   mutate(new_efficiency = if_else(new_efficiency>1, 1, new_efficiency))
+
+
+# Decide improvement rate
+# New Assumption: improvement rate doubles by 2050 comparing to the Base
+# For example, improvement rate = [2*(Base_2050 - Base_2015)/Base_2015]/(2050 - 2015)
+# Note, for different sectors, the improvement rate will be different due to different base values
+# start_year <- 2015
+# end_year <- 2050
+# 
+# IndEE_high <- data %>%
+#   dplyr::group_by(stub.technology) %>% 
+#   dplyr::mutate(value.start= efficiency[period == start_year],
+#                 value.end = efficiency[period == end_year],
+#                 improvement.rate = 1 + (2*(value.end - value.start)/value.start)/(end_year-start_year)*(period - start_year),
+#                 efficiency.new = if_else(period >= start_year, value.start * improvement.rate, efficiency)) %>% 
+#   dplyr::select(-value.start, -value.end, -improvement.rate)
