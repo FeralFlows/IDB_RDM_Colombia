@@ -129,7 +129,7 @@
                 <market>row</market>
             </ghgpolicy>
         </region>
-        <region name="Colombia">
+        <region name="Uruguay">
             <ghgpolicy name="nonCO2">
                 <market>row</market>
             </ghgpolicy>
