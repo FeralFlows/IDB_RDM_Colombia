@@ -1697,56 +1697,6 @@
             <linked-policy>nonCO2</linked-policy>
          </linked-ghg-policy>
       </region>
-      <region name="Colombia">
-         <linked-ghg-policy name="CH4">
-            <market>Colombia</market>
-            <linked-policy>nonCO2</linked-policy>
-         </linked-ghg-policy>
-         <linked-ghg-policy name="N2O">
-            <market>Colombia</market>
-            <linked-policy>nonCO2</linked-policy>
-         </linked-ghg-policy>
-         <linked-ghg-policy name="C2F6">
-            <market>Colombia</market>
-            <linked-policy>nonCO2</linked-policy>
-         </linked-ghg-policy>
-         <linked-ghg-policy name="CF4">
-            <market>Colombia</market>
-            <linked-policy>nonCO2</linked-policy>
-         </linked-ghg-policy>
-         <linked-ghg-policy name="HFC125">
-            <market>Colombia</market>
-            <linked-policy>nonCO2</linked-policy>
-         </linked-ghg-policy>
-         <linked-ghg-policy name="HFC134a">
-            <market>Colombia</market>
-            <linked-policy>nonCO2</linked-policy>
-         </linked-ghg-policy>
-         <linked-ghg-policy name="HFC245fa">
-            <market>Colombia</market>
-            <linked-policy>nonCO2</linked-policy>
-         </linked-ghg-policy>
-         <linked-ghg-policy name="SF6">
-            <market>Colombia</market>
-            <linked-policy>nonCO2</linked-policy>
-         </linked-ghg-policy>
-         <linked-ghg-policy name="CH4_AWB">
-            <market>Colombia</market>
-            <linked-policy>nonCO2</linked-policy>
-         </linked-ghg-policy>
-         <linked-ghg-policy name="CH4_AGR">
-            <market>Colombia</market>
-            <linked-policy>nonCO2</linked-policy>
-         </linked-ghg-policy>
-         <linked-ghg-policy name="N2O_AWB">
-            <market>Colombia</market>
-            <linked-policy>nonCO2</linked-policy>
-         </linked-ghg-policy>
-         <linked-ghg-policy name="N2O_AGR">
-            <market>Colombia</market>
-            <linked-policy>nonCO2</linked-policy>
-         </linked-ghg-policy>
-      </region>
     <region name="Uruguay">
          <linked-ghg-policy name="CH4">
             <market>row</market>
