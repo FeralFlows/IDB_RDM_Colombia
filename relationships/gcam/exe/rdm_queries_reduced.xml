@@ -176,7 +176,7 @@
       </aQuery>
 
  <aQuery>
-       <region name="Colombia" />
+		<all-regions/>
       <marketQuery title="CO2 prices">
          <axis1 name="market">market</axis1>
          <axis2 name="Year">market</axis2>
