@@ -33,6 +33,7 @@ echo "total number of GCAM runs to perform: $total_jobs"
 gen_config=0
 run_gcam=1
 post_proc=1
+num_gcam_queries=29  # must be in xml query file. these will be parallelized over.
 
 # Repo path, output dirs and paths, and scenario name
 repo_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/'
@@ -112,7 +113,7 @@ if [[ $run_gcam -eq 1 ]]; then
 			echo "sbatch --array=$arr_string --output=$slurmoutname $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
 			jid_n=$(sbatch --array=$arr_string --output=$slurmoutname $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
 		else
-			echo "sbatch --array=$arr_string --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
+			echo "sbatch --array=$arr_string --output=$slurmoutname --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
 			jid_n=$(sbatch --array=$arr_string --output=$slurmoutname --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
 		fi
 		jid_str="$jid_str:$jid_n"
@@ -130,8 +131,9 @@ if [[ $post_proc -eq 1 ]]; then
     PostProcFile="launch_post_processing.sh"
     PostProcFpath="$PostProcDir$PostProcFile"
     PostProcFn="${repo_path}relationships/gcam/output/code/"
-    echo "sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path"
-    sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path
+    postproc_array="1-${num_gcam_queries}"
+    echo "sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path $postproc_array"
+    sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path $postproc_array
 else
     echo "not conducting post-processing per user specifications"
 fi

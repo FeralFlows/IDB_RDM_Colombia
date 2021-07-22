@@ -3,7 +3,6 @@
 #SBATCH -p short,slurm,shared
 #SBATCH -t 179
 #SBATCH --output=./stdout/%A.%a.out
-#SBATCH --array=1-27
 #SBATCH -N 1
  
 #module load git

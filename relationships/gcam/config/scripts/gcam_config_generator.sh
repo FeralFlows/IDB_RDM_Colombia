@@ -30,6 +30,6 @@ PYFILE="$repo_path$PYFILE_EXTENSION"
 
 output_dir="${repo_path}relationships/gcam/config/output"
 
-echo "python $PYFILE $gcam_meta_scenario $repo_path $gcam_input_dir $base_config_file $base_alt_xml_dir $output_dir"
+echo "python $PYFILE --scenarios $gcam_meta_scenario --base_dir $repo_path --base_gcam_dir $gcam_input_dir --base_config_file $base_config_file --base_alt_xml_dir $base_alt_xml_dir --output_dir $output_dir --output_sub_dir $output_sub_dir"
 python $PYFILE --scenarios $gcam_meta_scenario --base_dir $repo_path --base_gcam_dir $gcam_input_dir --base_config_file $base_config_file --base_alt_xml_dir $base_alt_xml_dir --output_dir $output_dir --output_sub_dir $output_sub_dir
 echo "job completed."

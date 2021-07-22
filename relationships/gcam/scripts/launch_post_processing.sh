@@ -33,6 +33,7 @@ echo 'Launching post-processing meta script'
 output_sub_dir=$4
 gcam_meta_scenario=$5
 repo_path=$6
+postproc_array=$7
 raw_outpath="${repo_path}relationships/gcam/output/raw/${gcam_meta_scenario}/${output_sub_dir}/"
 post_proc_outpath="${repo_path}relationships/gcam/output/post_processed/${gcam_meta_scenario}/${output_sub_dir}/"
 # ensure post-processing output dir exists to avoid errors
@@ -55,7 +56,7 @@ fi
 
 f2="PostProcess_2.sh"
 fpath2="$1$f2"
-jid2=$(sbatch --dependency=afterany:$jid1 $fpath2 $PostProcFn $post_proc_outpath | sed 's/Submitted batch job //')
+jid2=$(sbatch --dependency=afterany:$jid1 --array=$postproc_array $fpath2 $PostProcFn $post_proc_outpath | sed 's/Submitted batch job //')
 
 f3="PostProcess_3.sh"
 fpath3="$1$f3"
