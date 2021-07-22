@@ -490,22 +490,6 @@
 
 <aQuery>
        <region name="Colombia" />
-    <supplyDemandQuery title="Quantity available for crop commodity demand (domestic and imported)">
-                <axis1 name="technology">technology</axis1>
-                <axis2 name="Year">demand-physical[@vintage]</axis2>
-                <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type = 'sector' 
-              ]/*[@type='subsector' and (@name='domestic corn' or @name='imported corn' or @name='domestic biomass' or @name='imported biomass' or
-            @name='domestic fibercrop' or @name='imported fibercrop' or @name='domestic misccrop' or @name='imported misccrop' or
-            @name='domestic oilcrop' or @name='imported oilcrop' or @name='domestic othergrain' or @name='imported othergrain' or @name='domestic palmfruit' or @name='imported palmfruit' or
-            @name='domestic rice' or @name='imported rice' or @name='domestic root_tuber'or @name='imported root_tuber' or @name='domestic sugarcrop' or @name='imported sugarcrop' or
-            @name='domestic wheat' or @name='imported wheat' or @name='FodderGrass'or @name='FodderHerb' or @name='Forest')]/*[@type='technology']//*[@type='input' ]/
-               demand-physical/node()</xPath>
-                <comments/>
-            </supplyDemandQuery>
-</aQuery>
-
-<aQuery>
-       <region name="Colombia" />
          <supplyDemandQuery title="ag production by crop type">
             <axis1 name="sector">sector[@name]</axis1>
             <axis2 name="Year">physical-output[@vintage]</axis2>
