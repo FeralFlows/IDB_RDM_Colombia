@@ -119,9 +119,18 @@
 	    <!-- Socio-Economics -->
 		<Value name = "argentina_population_gdp">/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input/idb_5.3/reference/Argentina_refPop_gSSP2.xml</Value>
 
+		<!--CO2 constraint-->
        <Value name = "policy">/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/input/ddp_colombia_co2_FFI_LUC_constraint.xml</Value>
        <Value name = "policy">/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/input/ddp_other_regions_co2_constraint.xml</Value>
        <Value name = "policy link file">/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/input/ddp_LINK_LUC.xml</Value>
+
+		<!--nonCO2 price-->
+    	<Value name="policy">/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/input/ddp_nonCO2_tax_Colombia_ROW.xml</Value>
+    	<Value name="policy">/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/input/ddp_nonCO2_link_regions.xml</Value>
+    	<Value name="policy link file">/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/input/ddp_nonCO2_link_gases.xml</Value>
+
+		<Value name="bio constr">/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/input/bio_ceiling_B100Const.xml</Value>
+
 
 		<Value name = "solver">/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input/solution/cal_broyden_config.xml</Value>
 

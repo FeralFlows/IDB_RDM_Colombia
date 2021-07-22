@@ -176,7 +176,7 @@
       </aQuery>
 
  <aQuery>
-       <region name="Colombia" />
+		<all-regions/>
       <marketQuery title="CO2 prices">
          <axis1 name="market">market</axis1>
          <axis2 name="Year">market</axis2>
@@ -523,22 +523,6 @@
             <xPath buildList="true" dataName="price" group="false" sumAll="false">*[@type='sector' and (local-name()='AgSupplySector')]/cost/text()</xPath>
             <comments/>
          </supplyDemandQuery>
-</aQuery>
-
-<aQuery>
-       <region name="Colombia" />
-   <supplyDemandQuery title="Demand by crop commodity type (Food,Feed,Nonfood,Other) ">
-                <axis1 name="technology">sector</axis1>
-                <axis2 name="Year">demand-physical[@vintage]</axis2>
-                <xPath buildList="true" dataName="input" group="false" sumAll="false">*[@type='sector']//*[@type='input' and
-            (@name='regional corn' or @name='regional fibercrop'
-               or @name='regional misccrop' or @name='regional oilcrop' or @name='regional othergrain'
-               or @name='regional palmfruit' or @name='regional rice' or @name='regional root_tuber'
-               or @name='regional sugarcrop' or @name='regional wheat' or @name='FodderGrass' or @name='FodderHerb'
-               or @name='Forest' or @name='Pasture')]/
-               demand-physical/node()</xPath>
-                <comments/>
-            </supplyDemandQuery>
 </aQuery>
 
 <aQuery>
