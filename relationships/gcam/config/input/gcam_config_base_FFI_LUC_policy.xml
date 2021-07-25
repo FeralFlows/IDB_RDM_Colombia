@@ -129,8 +129,6 @@
     	<Value name="policy">/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/input/ddp_nonCO2_link_regions.xml</Value>
     	<Value name="policy link file">/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/input/ddp_nonCO2_link_gases.xml</Value>
 
-		<Value name="bio constr">/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/input/bio_ceiling_B100Const.xml</Value>
-
 
 		<Value name = "solver">/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input/solution/cal_broyden_config.xml</Value>
 
