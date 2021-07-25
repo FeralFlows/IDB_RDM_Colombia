@@ -181,6 +181,7 @@ if __name__ == '__main__':
               'Uncertainty_4': ['Low', 'High'],
               'Uncertainty_5': ['Low', 'High'],
               'Uncertainty_6': ['Low', 'High'],
+              'Uncertainty_7': ['Low', 'High']
               }
 
     XL_cat = {'Strategy_1_High': ['RPS', 'Nuclear'],
@@ -201,7 +202,9 @@ if __name__ == '__main__':
               'Uncertainty_4_Low': ['CCSCost'],
               'Uncertainty_5_High': ['Ag', 'Hydro', 'Runoff'],
               'Uncertainty_5_Low': ['Ag', 'Hydro', 'Runoff'],
-              'Uncertainty_6_High': ['HOV-CL']
+              'Uncertainty_6_High': ['HOV-CL'],
+              'Uncertainty_7_Low': ['BioCeiling'],
+              'Uncertainty_7_High': ['BioCeiling']
               }
     main(args.scenarios, args.base_dir, args.base_gcam_dir, args.base_config_file, args.base_alt_xml_dir,
          args.output_dir, args.output_sub_dir, XL_fac, XL_cat)
