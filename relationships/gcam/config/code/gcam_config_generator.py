@@ -203,8 +203,8 @@ if __name__ == '__main__':
               'Uncertainty_5_High': ['Ag', 'Hydro', 'Runoff'],
               'Uncertainty_5_Low': ['Ag', 'Hydro', 'Runoff'],
               'Uncertainty_6_High': ['HOV-CL'],
-              'Uncertainty_7_Low': ['BioCeiling'],
-              'Uncertainty_7_High': ['BioCeiling']
+              'Uncertainty_7_Low': ['BioCeiling', 'BioCeiling_link'],
+              'Uncertainty_7_High': ['BioCeiling', 'BioCeiling_link']
               }
     main(args.scenarios, args.base_dir, args.base_gcam_dir, args.base_config_file, args.base_alt_xml_dir,
          args.output_dir, args.output_sub_dir, XL_fac, XL_cat)
