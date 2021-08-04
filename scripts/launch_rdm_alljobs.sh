@@ -24,34 +24,34 @@
 # Step 1: User specify main assumptions
 
 # Total number of GCAM runs to perform
-total_jobs=8192
+total_jobs=6
 #total_jobs=10
 echo "total number of GCAM runs to perform: $total_jobs"
 
 # Which steps to perform--generate configs, perform gcam runs, and/or
 # conduct post-processing. 0=No, 1=Yes
-gen_config=1
+gen_config=0
 run_gcam=1
 post_proc=1
-num_gcam_queries=28  # must be in xml query file. these will be parallelized over.
+num_gcam_queries=29  # must be in xml query file. these will be parallelized over.
 
 # Repo path, output dirs and paths, and scenario name
-repo_path='/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/'
+repo_path='/qfs/people/wild566/rdm_test/IDB_RDM_Colombia/'
 gcam_meta_scenario='RDM_Policy'  # scenarios upon which variations will be done.
 #gcam_meta_scenario='RDM_NoPolicy'  # scenarios upon which variations will be done.
 # specify a sub-dir within the meta-scenario output dir. Change this when you update 
 # runs on a new date, and want to save old runs, for example. Used for both raw and
 # post-processed outputs.
-output_sub_dir='07242021'
+output_sub_dir='08042021'
 #output_sub_dir='06252021_no_cprice'
 slurmoutname="./stdout/${gcam_meta_scenario}.${output_sub_dir}.%A.%a.out"
 
 # GCAM executable, input files, and base configuration file paths
 # Either of these can be located inside or outside of the repository.
-gcam_exe_fpath=/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/exe/
-gcam_input_dir=/pic/projects/GCAM/TomWild/GCAM-LAC/gcam-LAC-stash/input
-base_config_file=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/config/input/gcam_config_base_FFI_LUC_policy.xml
-base_alt_xml_dir=/pic/projects/GCAM/TomWild/IDB_RDM_Colombia/relationships/gcam/input
+gcam_exe_fpath=/qfs/people/wild566/rdm_test/gcam-LAC-stash/exe/
+gcam_input_dir=/qfs/people/wild566/rdm_test/gcam-LAC-stash/input
+base_config_file=/qfs/people/wild566/rdm_test/IDB_RDM_Colombia/relationships/gcam/config/input/gcam_config_base_FFI_LUC_policy.xml
+base_alt_xml_dir=/qfs/people/wild566/rdm_test/IDB_RDM_Colombia/relationships/gcam/input
 
 #-------------------------------------------------------------------------------
 # Step 2: Generate GCAM configuration files
