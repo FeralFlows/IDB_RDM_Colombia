@@ -34,6 +34,7 @@ gen_config=0
 run_gcam=1
 post_proc=1
 num_gcam_queries=29  # must be in xml query file. these will be parallelized over.
+acct=ihesd
 
 # Repo path, output dirs and paths, and scenario name
 repo_path='/qfs/people/wild566/rdm_test/IDB_RDM_Colombia/'
@@ -63,7 +64,7 @@ if [[ $gen_config -eq 1 ]]; then
 	# launch script to generate config files
 	config_extension="relationships/gcam/config/scripts/gcam_config_generator.sh"
 	config_generator_path="$repo_path$config_extension"
-	jid1=$(sbatch $config_generator_path $repo_path $gcam_meta_scenario $output_sub_dir $gcam_input_dir $base_config_file $base_alt_xml_dir | sed 's/Submitted batch job //')
+	jid1=$(sbatch -A $acct $config_generator_path $repo_path $gcam_meta_scenario $output_sub_dir $gcam_input_dir $base_config_file $base_alt_xml_dir | sed 's/Submitted batch job //')
 else
 	echo "not generating GCAM configuration files per user specifications"
 	jid1='None'
@@ -110,11 +111,11 @@ if [[ $run_gcam -eq 1 ]]; then
 		arr_upper="$arr"
 		arr_string="$arr_lower$arr_upper"
 		if [[ $jid1 == "None" ]]; then
-			echo "sbatch --array=$arr_string --output=$slurmoutname $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
-			jid_n=$(sbatch --array=$arr_string --output=$slurmoutname $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
+			echo "sbatch -A $acct --array=$arr_string --output=$slurmoutname $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
+			jid_n=$(sbatch -A $acct --array=$arr_string --output=$slurmoutname $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
 		else
-			echo "sbatch --array=$arr_string --output=$slurmoutname --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
-			jid_n=$(sbatch --array=$arr_string --output=$slurmoutname --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
+			echo "sbatch -A $acct --array=$arr_string --output=$slurmoutname --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath"
+			jid_n=$(sbatch -A $acct --array=$arr_string --output=$slurmoutname --dependency=afterany:$jid1 $run_gcam_script_path $repo_path ${start_point[count]} $output_sub_dir $gcam_meta_scenario $gcam_exe_fpath | sed 's/Submitted batch job //')
 		fi
 		jid_str="$jid_str:$jid_n"
 		count=$((count+1))
@@ -132,8 +133,9 @@ if [[ $post_proc -eq 1 ]]; then
     PostProcFpath="$PostProcDir$PostProcFile"
     PostProcFn="${repo_path}relationships/gcam/output/code/"
     postproc_array="1-${num_gcam_queries}"
-    echo "sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path $postproc_array"
-    sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path $postproc_array
+    echo "execute post-processing call"
+    echo "sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path $postproc_array $acct"
+    sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path $postproc_array $acct
 else
     echo "not conducting post-processing per user specifications"
 fi
