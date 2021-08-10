@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH -t 179
-#SBATCH -p short,shared -N 1 --cpus-per-task 3
+#SBATCH -t 600
+#SBATCH -p shared -N 1 --cpus-per-task 3
 
 module purge
 module load git

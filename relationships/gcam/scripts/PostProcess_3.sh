@@ -1,5 +1,4 @@
 #!/bin/bash
-#SBATCH -A br21_wild566
 #SBATCH -t 179
 #SBATCH -p short,slurm,shared
 #SBATCH --output=./stdout/%A.out

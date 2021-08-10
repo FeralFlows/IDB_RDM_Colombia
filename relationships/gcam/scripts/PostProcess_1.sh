@@ -1,5 +1,4 @@
 #!/bin/bash
-#SBATCH -A br21_wild566
 #SBATCH -p slurm
 #SBATCH -t 600
 #SBATCH --output=./stdout/%A.out
