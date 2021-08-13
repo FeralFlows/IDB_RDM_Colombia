@@ -1,5 +1,4 @@
 #!/bin/bash
-#SBATCH -A br21_wild566
 #SBATCH -p short,slurm,shared
 #SBATCH -t 179
 #SBATCH -J config
@@ -25,7 +24,7 @@ gcam_input_dir=$4
 base_config_file=$5
 base_alt_xml_dir=$6
 
-PYFILE_EXTENSION="relationships/gcam/config/code/gcam_config_generator.py"
+PYFILE_EXTENSION="relationships/gcam/config/code/gcam_config_generatorv2.py"
 PYFILE="$repo_path$PYFILE_EXTENSION"
 
 output_dir="${repo_path}relationships/gcam/config/output"

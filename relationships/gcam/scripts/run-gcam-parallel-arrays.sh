@@ -38,11 +38,12 @@ exe_extension="relationships/gcam/exe/xmldb_batch_template.xml"
 xmldb_batch="$repo_path$exe_extension"
 xmldb_driver_extension="relationships/gcam/exe/XMLDBDriver.properties"
 xmldb_driver_file="$repo_path$xmldb_driver_extension"
+gcam_queries=$6
 # cp $xmldb_driver_file $gcam_exe_fpath 
 
 # Run GCAM
 echo "run gcam"
 date
 ldd ./gcam.exe
-echo "$xmldb_batch | sed "s#__OUTPUT_NAME__#${raw_outpath}${gcam_meta_scenario}_${NEW_TASK_ID}.csv#" | ./gcam.exe -C$FILE -Llog_conf.xml"
-cat $xmldb_batch | sed "s#__OUTPUT_NAME__#${raw_outpath}${gcam_meta_scenario}_${NEW_TASK_ID}.csv#" | ./gcam.exe -C$FILE -Llog_conf.xml
+echo "$xmldb_batch | sed "s#__OUTPUT_NAME__#${raw_outpath}${gcam_meta_scenario}_${NEW_TASK_ID}.csv#" | sed "s#__GCAM_Queries__#${gcam_queries}#" | ./gcam.exe -C$FILE -Llog_conf.xml"
+cat $xmldb_batch | sed "s#__OUTPUT_NAME__#${raw_outpath}${gcam_meta_scenario}_${NEW_TASK_ID}.csv#" | sed "s#__GCAM_Queries__#${gcam_queries}#" | ./gcam.exe -C$FILE -Llog_conf.xml
