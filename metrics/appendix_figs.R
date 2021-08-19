@@ -131,6 +131,20 @@ PassBEV <- TrnServTech %>%
   group_by(experiment, year) %>%
   dplyr::summarise(value = sum(value))
 
+PassRoad <- TrnServTech %>%
+  filter(Units == "million pass-km", subsector %in% c("Bus", "2W and 3W",
+                                                      "Car", "Large Car and Truck", "Mini Car"),
+         experiment %in% c("Policy_Strategy3High",
+                           "Policy_Strategy3Low"),
+         year >= 2015 & year <= 2050) %>%
+  group_by(experiment, year) %>%
+  dplyr::summarise(value = sum(value))
+
+PassBEVShare <- PassBEV %>%
+  left_join(PassRoad, by = c("experiment", "year"),
+            suffix = c(".BEV", ".Total")) %>%
+  mutate(share = (value.BEV / value.Total) * 100 )
+
 FreightBEV <- TrnServTech %>%
   filter(Units == "million ton-km", technology %in% c("BEV"),
          experiment %in% c("Policy_Strategy3High",
@@ -139,6 +153,18 @@ FreightBEV <- TrnServTech %>%
   group_by(experiment, year) %>%
   dplyr::summarise(value = sum(value))
 
+FreightRoad <- TrnServTech %>%
+  filter(Units == "million ton-km", subsector %in% c("Light truck", "Medium truck", "Heavy truck"),
+         experiment %in% c("Policy_Strategy3High",
+                           "Policy_Strategy3Low"),
+         year >= 2015 & year <= 2050) %>%
+  group_by(experiment, year) %>%
+  dplyr::summarise(value = sum(value))
+
+FreightBEVShare <- FreightBEV %>%
+  left_join(FreightRoad, by = c("experiment", "year"),
+            suffix = c(".BEV", ".Total")) %>%
+  mutate(share = (value.BEV / value.Total) * 100 )
 
 
 plot <- PassBEV %>%
@@ -164,3 +190,25 @@ plot <- FreightBEV %>%
   theme_bw() +
   theme(text = element_text(size = 12), axis.text.x = element_text(angle = 90, hjust = 1))+
   ggsave(paste0(PLOT_FOLDER,"BEVFreightTrnServ.png"), height = 5, width = 8)
+
+
+# CO2 price ---------------------------------------------------------------
+
+qry <- "CO2 prices.proj"
+prj_path <- file.path(base_dir, qry)
+prj <- loadProject(prj_path)
+
+CO2Price <- prj$data$`CO2 prices`
+
+ROWCO2Price <- CO2Price %>%
+  filter(market == "rowCO2", year >= 2015 & year <= 2050)
+
+plot <- ROWCO2Price %>%
+  ggplot(aes(x = year, y = value, color = experiment)) +
+  geom_line(size = 1, aes( color = experiment )) +
+  scale_color_discrete()+
+  labs(title = "ROW CO2 price", x = "Scenario", y = "1990$/tC") +
+  theme_bw() +
+  theme(text = element_text(size = 12), axis.text.x = element_text(angle = 90, hjust = 1))+
+  ggsave(paste0(PLOT_FOLDER,"CO2 price.png"), height = 5, width = 8)
+
