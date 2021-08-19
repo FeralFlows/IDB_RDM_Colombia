@@ -27,7 +27,7 @@ def indent(elem, level=0):
 
 
 def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir, output_dir, output_sub_dir, XL_fac,
-         XL_cat):
+         XL_cat, start_number=0):
     ''' Generate GCAM config files for use in Scenario Discovery and RDM experiments.
     :param scenarios: list of strings of scenario names
     :type scenarios: list of str
@@ -41,6 +41,9 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
     :type output_dir: str
     :param output_sub_dir: name of any sub-directory (e.g., a date like '04052021') to store xml in
     :type output_sub_dir: str
+    :param start_number: number to list at end of XML config file generated. Default 0. Useful if combining different
+    batches of config files.
+    : type start_number: int
     '''
 
 
@@ -126,7 +129,7 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
         factor_file_list = copy.deepcopy(factor_file_list_orig)
         # Add column to store unique simulation run ID for each row
         for row in range(len(factor_file_list)):
-            scen = (str(row))  # Scenario name
+            scen = (str(row + start_number))  # Scenario name
             factor_file_list[row] = list(factor_file_list[row])  # first convert each tuple of file names to list
             factor_file_list_orig2[row] = list(factor_file_list_orig2[row])  # first convert each tuple of file names to list
             factor_file_list[row].append(row)  # store a unique simulation ID with each file combination
@@ -207,4 +210,4 @@ if __name__ == '__main__':
               'Uncertainty_7_High': ['BioCeiling', 'BioCeiling_link']
               }
     main(args.scenarios, args.base_dir, args.base_gcam_dir, args.base_config_file, args.base_alt_xml_dir,
-         args.output_dir, args.output_sub_dir, XL_fac, XL_cat)
+         args.output_dir, args.output_sub_dir, XL_fac, XL_cat, start_number=0)
