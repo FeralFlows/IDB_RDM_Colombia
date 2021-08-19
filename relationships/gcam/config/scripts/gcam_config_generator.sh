@@ -24,7 +24,7 @@ gcam_input_dir=$4
 base_config_file=$5
 base_alt_xml_dir=$6
 
-PYFILE_EXTENSION="relationships/gcam/config/code/gcam_config_generatorv2.py"
+PYFILE_EXTENSION="relationships/gcam/config/code/gcam_config_generator.py"
 PYFILE="$repo_path$PYFILE_EXTENSION"
 
 output_dir="${repo_path}relationships/gcam/config/output"
