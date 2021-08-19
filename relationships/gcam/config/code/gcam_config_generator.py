@@ -196,13 +196,12 @@ if __name__ == '__main__':
               'Uncertainty_1_High': ['GDP', 'Population'],
               'Uncertainty_1_Low': ['GDP', 'Population'],
               'Uncertainty_2_High': ['EVCost'],
-              'Uncertainty_2_Low': ['EVCost'],
               'Uncertainty_3_High': ['RECostSolar', 'RECostWind'],
               'Uncertainty_4_High': ['CCSCost'],
               'Uncertainty_4_Low': ['CCSCost'],
               'Uncertainty_5_High': ['Ag', 'Hydro', 'Runoff'],
               'Uncertainty_5_Low': ['Ag', 'Hydro', 'Runoff'],
-              'Uncertainty_6_High': ['HOV-CL'],
+              'Uncertainty_6_High': ['sw_high_CL'],
               'Uncertainty_7_Low': ['BioCeiling', 'BioCeiling_link'],
               'Uncertainty_7_High': ['BioCeiling', 'BioCeiling_link']
               }
