@@ -1,3 +1,6 @@
+LIB='/cluster/tufts/hpc/tools/R/4.0.0'
+.libPaths(c("",LIB))
+
 library('rgcam')
 library(tibble)
 library(dplyr)
@@ -64,6 +67,7 @@ produce_query_file <- function(base_dir, output_file, proc_num=NULL, plotting_fo
           mutate(scenario = gsub('DDP_LeversTest_3', 'DDPLeversTest3', scenario)) %>% 
           mutate(scenario = gsub('DDP_LeversTest', 'DDPLeversTest', scenario)) %>% 
           mutate(scenario = gsub('DDP_XL', 'DDPXL', scenario)) %>% 
+          mutate(scenario = gsub('RDM_Policy', 'RDMPolicy', scenario)) %>% 		  
           mutate(experiment=substring(scenario, regexpr("_", scenario) + 1, nchar(scenario))) %>%
 #          mutate(experiment=1) %>% 
           mutate(old_scen_name=scenario) %>% 
@@ -86,7 +90,7 @@ produce_query_file <- function(base_dir, output_file, proc_num=NULL, plotting_fo
       prj[[experiment]] <- prj[[experiment]][str_locn]
     }
     # Save query file as a proj file
-    saveProject(prj, file=paste0(base_dir, 'select_queries_metis', '.proj'))
-    print(paste0("Completing query for metis format."))
+    saveProject(prj, file=paste0(base_dir, 'select_queries_plutus', '.proj'))
+    print(paste0("Completing query for plutus format."))
   }
 }

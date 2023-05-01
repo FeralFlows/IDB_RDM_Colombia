@@ -1,18 +1,32 @@
 #!/bin/bash
-#SBATCH -p short,slurm,shared
-#SBATCH -t 179
+#SBATCH --mem=500000
+#SBATCH -t 600
 #SBATCH --output=./stdout/%A.%a.out
-#SBATCH -N 1
- 
-#module load git
-#module load svn/1.8.13
-#module load R/3.4.3
-#module load java/1.8.0_31
 
 module purge
-module load gcc/8.1.0
-module load R/3.4.3
-module load intel
+module load java/1.8.0_60
+module load R/4.0.0
+module load git
+module load gcc/9.3.0
+module load intel-oneapi-tbb/2021.1.1-gcc-9.3.0
+
+##SBATCH -N 1
+##SBATCH --mem=20000
+##SBATCH --cpus-per-task 72
+
+
+export CXX=g++
+export BOOST_INCLUDE=/cluster/tufts/lamontagnelab/byarla01/libs/boost_1_67_0
+export BOOST_LIB=/cluster/tufts/lamontagnelab/byarla01/libs/boost_1_67_0/stage/lib
+export XERCES_INCLUDE=/cluster/tufts/lamontagnelab/byarla01/libs/xercesc/include
+export XERCES_LIB=/cluster/tufts/lamontagnelab/byarla01/libs/xercesc/lib 
+export JARS_LIB=/cluster/tufts/lamontagnelab/byarla01/libs/jars/*
+export JAVA_INCLUDE=${JAVA_HOME}/include
+export JAVA_LIB=${JAVA_HOME}/jre/lib/amd64/server
+
+export EIGEN_INCLUDE=/cluster/tufts/lamontagnelab/byarla01/libs/eigen
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/shared/ansys_inc/v193/v195/tp/qt/5.9.6/linx64/lib/
  
 echo 'Running second post processing script in parallel for each query'
 echo "Started at $(date)"

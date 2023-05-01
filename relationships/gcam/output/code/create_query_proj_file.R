@@ -1,9 +1,13 @@
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
+
+LIB='/cluster/tufts/hpc/tools/R/4.0.0'
+.libPaths(c("",LIB))
+
 library('rgcam')
 
 source(paste0(args[4], 'proj_file_function.R'))
-options("rgcam.saved_compressed" = FALSE)
+options("rgcam.saved_compressed" = TRUE)
 post_proc_outpath <- args[5]
 output_file <- c('QueryResults.proj')
 produce_query_file(post_proc_outpath, output_file, proc_num=args[2], plotting_format=args[3])
