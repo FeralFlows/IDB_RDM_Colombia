@@ -60,11 +60,18 @@ def main(scenarios, base_dir, base_gcam_dir, base_config_file, base_alt_xml_dir,
     DOE_DF = pd.DataFrame(columns = std_cols + list(XL_fac),
                           index = [i for i in range(0, num_scenarios*num_experiments)])
     scenario_counter = 0  # Aids in cases where we have to handle more than one scenario.
+    
+    print(config_dir)
+    print(base_config_file)
+    
     for gcam_scen in scenarios:
         tree=ET.parse(os.path.join(config_dir, 'input', base_config_file))
         root=tree.getroot()  # Element "Configuration" top of file
         scenComp=root.find('ScenarioComponents')  # Element "ScenarioComponents"
 
+        print(XL_fac.keys())
+        print(XL_fac)
+        
         # Create unique combinations of uncertain factors (xml files) for which to run GCAM
         factor_files = [[] for i in range(len(XL_fac.keys()))]
         factor_names = [[] for i in range(len(XL_fac.keys()))]
@@ -202,9 +209,12 @@ if __name__ == '__main__':
               'Uncertainty_3_High': ['RECostSolar', 'RECostWind'],
               'Uncertainty_4_High': ['CCSCost'],
               'Uncertainty_4_Low': ['CCSCost'],
-              'Uncertainty_5_High': ['Ag', 'Hydro', 'Runoff'],
-              'Uncertainty_5_Low': ['Ag', 'Hydro', 'Runoff'],
+              'Uncertainty_5_High': ['Ag', 'Hydro'],
+              'Uncertainty_5_Low': ['Ag', 'Hydro'],
+          #    'Uncertainty_5_High': ['Ag', 'Hydro', 'Runoff'],
+          #    'Uncertainty_5_Low': ['Ag', 'Hydro', 'Runoff'],
               'Uncertainty_6_High': ['sw_high_CL'],
+              'Uncertainty_6_Low': ['AgTrade'],
               'Uncertainty_7_Low': ['BioCeiling', 'BioCeiling_link'],
               'Uncertainty_7_High': ['BioCeiling', 'BioCeiling_link']
               }
