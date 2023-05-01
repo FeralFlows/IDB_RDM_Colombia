@@ -1,14 +1,31 @@
 #!/bin/bash
-#SBATCH -t 600
-#SBATCH -p shared -N 1 --cpus-per-task 3
+#SBATCH -t 5000
+#SBATCH -p llab 
+#SBATCH --cpus-per-task 3
+#SBATCH --mem=20000
 
 module purge
+module load java/1.8.0_60
+module load R/4.0.0
 module load git
-module load svn/1.8.13
-module load R/3.4.3
-module load java/1.8.0_31
-module load gcc/8.1.0
+module load gcc/9.3.0
+module load intel-oneapi-tbb/2021.1.1-gcc-9.3.0
+
+##SBATCH -n 1
+export CXX=g++
+export BOOST_INCLUDE=/cluster/tufts/lamontagnelab/byarla01/libs/boost_1_67_0
+export BOOST_LIB=/cluster/tufts/lamontagnelab/byarla01/libs/boost_1_67_0/stage/lib
+export XERCES_INCLUDE=/cluster/tufts/lamontagnelab/byarla01/libs/xercesc/include
+export XERCES_LIB=/cluster/tufts/lamontagnelab/byarla01/libs/xercesc/lib
  
+export JARS_LIB=/cluster/tufts/lamontagnelab/byarla01/libs/jars/*
+export JAVA_INCLUDE=${JAVA_HOME}/include
+export JAVA_LIB=${JAVA_HOME}/jre/lib/amd64/server
+
+export EIGEN_INCLUDE=/cluster/tufts/lamontagnelab/byarla01/libs/eigen
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/shared/ansys_inc/v193/v195/tp/qt/5.9.6/linx64/lib/
+
 echo 'Library config:'
 echo "SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
 
@@ -45,5 +62,5 @@ gcam_queries=$6
 echo "run gcam"
 date
 ldd ./gcam.exe
-echo "$xmldb_batch | sed "s#__OUTPUT_NAME__#${raw_outpath}${gcam_meta_scenario}_${NEW_TASK_ID}.csv#" | sed "s#__GCAM_Queries__#${gcam_queries}#" | ./gcam.exe -C$FILE -Llog_conf.xml"
-cat $xmldb_batch | sed "s#__OUTPUT_NAME__#${raw_outpath}${gcam_meta_scenario}_${NEW_TASK_ID}.csv#" | sed "s#__GCAM_Queries__#${gcam_queries}#" | ./gcam.exe -C$FILE -Llog_conf.xml
+echo "$xmldb_batch | sed "s#__OUTPUT_NAME__#${raw_outpath}${gcam_meta_scenario}_${NEW_TASK_ID}.csv#" | sed "s#__GCAM_Queries__#${gcam_queries}#" | ./gcam.exe -C$FILE -Llog_conf_mod.xml"
+cat $xmldb_batch | sed "s#__OUTPUT_NAME__#${raw_outpath}${gcam_meta_scenario}_${NEW_TASK_ID}.csv#" | sed "s#__GCAM_Queries__#${gcam_queries}#" | ./gcam.exe -C$FILE -Llog_conf_mod.xml
