@@ -50,6 +50,8 @@ repo_path=$6
 postproc_array=$7
 acct=$8
 partition=$9
+slurmoutname_serial=$10
+
 raw_outpath="${repo_path}relationships/gcam/output/raw/${gcam_meta_scenario}/${output_sub_dir}/"
 post_proc_outpath="${repo_path}relationships/gcam/output/post_processed/${gcam_meta_scenario}/${output_sub_dir}/"
 # ensure post-processing output dir exists to avoid errors
@@ -67,13 +69,13 @@ if [[ $gcam_dependencies == "None" ]]; then
 else
     echo "GCAM run dependencies exist, waiting to conduct post-processing"
     echo "$gcam_dependencies"
-    jid1=$(sbatch -A $acct -p $partition --dependency=afterany$gcam_dependencies $fpath1 $PostProcFn $raw_outpath $post_proc_outpath | sed 's/Submitted batch job //')
+    jid1=$(sbatch -A $acct -p $partition --output=$slurmoutname_serial --dependency=afterany$gcam_dependencies $fpath1 $PostProcFn $raw_outpath $post_proc_outpath | sed 's/Submitted batch job //')
 fi
 
 f2="PostProcess_2.sh"
 fpath2="$1$f2"
 jid2=$(sbatch -A $acct -p $partition --dependency=afterany:$jid1 --array=$postproc_array $fpath2 $PostProcFn $post_proc_outpath | sed 's/Submitted batch job //')
-#jid2=$(sbatch -A $acct -p $partition --array=$postproc_array $fpath2 $PostProcFn $post_proc_outpath | sed 's/Submitted batch job //')
+#jid2=$(sbatch -A $acct -p $partition --output=$slurmoutname_serial --array=$postproc_array $fpath2 $PostProcFn $post_proc_outpath | sed 's/Submitted batch job //')
 
 
 f3="PostProcess_3.sh"
