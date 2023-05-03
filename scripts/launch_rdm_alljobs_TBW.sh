@@ -170,7 +170,7 @@ if [[ $post_proc -eq 1 ]]; then
     postproc_array="1-${num_gcam_queries}"
     echo "execute post-processing call"
     echo "sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path $postproc_array $acct $partition"
-    sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path $postproc_array $acct $partition
+    sh $PostProcFpath $PostProcDir $PostProcFn $jid_str $output_sub_dir $gcam_meta_scenario $repo_path $postproc_array $acct $partition $slurmoutname_serial
 else
     echo "not conducting post-processing per user specifications"
 fi
