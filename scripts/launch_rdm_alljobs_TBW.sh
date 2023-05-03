@@ -88,7 +88,7 @@ if [[ $gen_config -eq 1 ]]; then
 	# launch script to generate config files
 	config_extension="relationships/gcam/config/scripts/gcam_config_generator.sh"
 	config_generator_path="$repo_path$config_extension"
-	jid1=$(sbatch -A $acct $config_generator_path $repo_path $gcam_meta_scenario $output_sub_dir $gcam_input_dir $base_config_file $base_alt_xml_dir $py_config_gen | sed 's/Submitted batch job //')
+	jid1=$(sbatch -A $acct -p $partition $config_generator_path $repo_path $gcam_meta_scenario $output_sub_dir $gcam_input_dir $base_config_file $base_alt_xml_dir $py_config_gen | sed 's/Submitted batch job //')
 else
 	echo "not generating GCAM configuration files per user specifications"
 	jid1='None'
