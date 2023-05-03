@@ -1,6 +1,5 @@
 #!/bin/bash
 #SBATCH -t 5000
-#SBATCH -p llab 
 #SBATCH --cpus-per-task 3
 #SBATCH --mem=20000
 
