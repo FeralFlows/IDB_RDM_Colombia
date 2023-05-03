@@ -1,5 +1,4 @@
 #!/bin/bash
-#SBATCH -p llab
 #SBATCH -t 179
 #SBATCH -J config
 #SBATCH --output=./stdout/%A.out
